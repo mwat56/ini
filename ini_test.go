@@ -62,34 +62,34 @@ func Benchmark_tKeyVal_string0(b *testing.B) {
 	}
 } // Benchmark_tKeyVal_string0()
 
-func Test_trimRemoveQuotes(t *testing.T) {
+func Test_removeQuotes(t *testing.T) {
 	si1 := "'this is a text'"
 	so1 := "this is a text"
 	si2 := " \" this is a text \" "
-	so2 := " this is a text "
+	ws2 := " this is a text "
 	si3 := " \" this is a text ' "
-	so3 := "\" this is a text '"
+	ws3 := "\" this is a text '"
 	type args struct {
 		aString string
 	}
 	tests := []struct {
-		name          string
-		args          args
-		wantRFiltered string
+		name        string
+		args        args
+		wantRString string
 	}{
 		// TODO: Add test cases.
 		{" 1", args{si1}, so1},
-		{" 2", args{si2}, so2},
-		{" 3", args{si3}, so3},
+		{" 2", args{si2}, ws2},
+		{" 3", args{si3}, ws3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotRFiltered := trimRemoveQuotes(tt.args.aString); gotRFiltered != tt.wantRFiltered {
-				t.Errorf("trimRemoveQuotes() =\n{%v}, want {%v}", gotRFiltered, tt.wantRFiltered)
+			if gotRString := removeQuotes(tt.args.aString); gotRString != tt.wantRString {
+				t.Errorf("removeQuotes() = %v, want %v", gotRString, tt.wantRString)
 			}
 		})
 	}
-} // Test_trimRemoveQuotes()
+} // Test_removeQuotes
 
 func Test_tSection_String(t *testing.T) {
 	sl1 := TSection{
@@ -115,6 +115,35 @@ func Test_tSection_String(t *testing.T) {
 		})
 	}
 } // Test_tSection_String()
+
+func Test_tSection_UpdateKey(t *testing.T) {
+	cs1 := make(TSection, 0, defCapacity)
+	cs1.AddKey("Key1", "Value1")
+	cs1.AddKey("Key2", "Value2")
+	type args struct {
+		aKey   string
+		aValue string
+	}
+	tests := []struct {
+		name string
+		cs   *TSection
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		{" 0", &cs1, args{"", ""}, false},
+		{" 1", &cs1, args{"Key1", "Value 1 (new)"}, true},
+		{" 2", &cs1, args{"Key 2", "Value 2 (new)"}, true},
+		{" 3", &cs1, args{"Key2", "Value 2 (new)"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cs.UpdateKey(tt.args.aKey, tt.args.aValue); got != tt.want {
+				t.Errorf("TSection.UpdateKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+} // Test_tSection_UpdateKey()
 
 func Benchmark_TSection_String(b *testing.B) {
 	sl1 := TSection{
@@ -454,10 +483,10 @@ func TestIniSections_UpdateSectKeyBool(t *testing.T) {
 } // TestIniSections_UpdateSectKeyBool()
 
 func TestIniSections_WriteFile(t *testing.T) {
+	id, _ := LoadFile(inFileName)
 	type args struct {
 		aFilename string
 	}
-	id, _ := LoadFile(inFileName)
 	tests := []struct {
 		name       string
 		id         *TSections
@@ -466,11 +495,7 @@ func TestIniSections_WriteFile(t *testing.T) {
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{"1",
-			id,
-			args{aFilename: outFileName},
-			4253,
-			false},
+		{"1", id, args{outFileName}, 4280, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -517,10 +542,10 @@ func (tw tTestWalk) Walk(aSect, aKey, aVal string) {
 } // walkFunc()
 
 func TestTSections_Walker(t *testing.T) {
+	il, _ := LoadFile(inFileName)
 	type args struct {
 		aWalker TIniWalker
 	}
-	il, _ := LoadFile(inFileName)
 	var walker tTestWalk
 	tests := []struct {
 		name   string
@@ -536,77 +561,3 @@ func TestTSections_Walker(t *testing.T) {
 		})
 	}
 } // TestTSections_Walker()
-
-func TestTSections_RemoveSectionKey(t *testing.T) {
-	type fields struct {
-		defSect  string
-		secOrder tOrder
-		sections tIniSections
-	}
-	type args struct {
-		aSection string
-		aKey     string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			id := &TSections{
-				defSect:  tt.fields.defSect,
-				secOrder: tt.fields.secOrder,
-				sections: tt.fields.sections,
-			}
-			if got := id.RemoveSectionKey(tt.args.aSection, tt.args.aKey); got != tt.want {
-				t.Errorf("TSections.RemoveSectionKey() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestTKeyVal_String(t *testing.T) {
-	type fields struct {
-		Key   string
-		Value string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kv := &TKeyVal{
-				Key:   tt.fields.Key,
-				Value: tt.fields.Value,
-			}
-			if got := kv.String(); got != tt.want {
-				t.Errorf("TKeyVal.String() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestTSection_String(t *testing.T) {
-	tests := []struct {
-		name        string
-		cs          *TSection
-		wantRString string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotRString := tt.cs.String(); gotRString != tt.wantRString {
-				t.Errorf("TSection.String() = %v, want %v", gotRString, tt.wantRString)
-			}
-		})
-	}
-}
