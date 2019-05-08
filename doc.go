@@ -1,9 +1,9 @@
 /*
 Package ini implementes an INI file reader/writer.
 
-    Copyright © 2019  M.Watermann, 10247 Berlin, Germany
-                All rights reserved
-            EMail : <support@mwat.de>
+    Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+                    All rights reserved
+                EMail : <support@mwat.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

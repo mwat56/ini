@@ -10,7 +10,7 @@ This package provides the `TSections` class to read/parse, modify, and write suc
 
 You can use `Go` to install this package for you:
 
-    go get github.com/mwat56/go-ini
+    go get -u github.com/mwat56/go-ini
 
 ## Usage
 
@@ -31,7 +31,7 @@ An INI file usually looks like this:
         …
 
 Leading whitespace is ignored, empty lines and those beginning with either a semicolon (`;`) or a number sign (`#`) are skipped (and not preserved when overwriting the file).
-Lines that can't be identified as either a section heading or a key/value pair are silently ignored as well.
+Lines that can't be identified as either a _section heading_ or a _key/value pair_ are silently ignored as well.
 Quotes and whitespace surrounding a key or a value are ignored.
 
 A line ending with a backslash (`\`) will be concatenated with the following line (unless that's a comment line).
@@ -40,15 +40,17 @@ By that mechanism you can use really long values spaning several lines.
 You can create a `TSections` instance by either calling `ini.NewSections()` and then using the numerous methods (including `Load()` and `Store()`).
 Or you simply call `ini.LoadFile(aFilename)` which does – as the name suggests – the loading for you.
 
-_Note_ that both section and key names are case sensitive to allow for the broadest possible range when naming them. The same is true for the values which are, of course, case sensitive; an application using this package, however, is free to interpret the values returned in any way they like.
+_Note_ that both section and key names are _case sensitive_ to allow for the broadest possible range when naming them.
+The same is true for the values which are, of course, case sensitive.
+An application using this package, however, is free to interpret the values returned in any way they like.
 
-Please look at the source code documentation to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
+Please look at the [source code documentation](https://godoc.org/github.com/mwat56/go-ini) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
 
 ## Licence
 
-    Copyright © 2019  M.Watermann, 10247 Berlin, Germany
-                All rights reserved
-            EMail : <support@mwat.de>
+    Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+                    All rights reserved
+                EMail : <support@mwat.de>
 
 > This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 >
