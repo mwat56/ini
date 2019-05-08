@@ -1,5 +1,7 @@
 # INI
 
+[![GoDoc](https://godoc.org/github.com/mwat56/go-ini?status.svg)](https://godoc.org/github.com/mwat56/go-ini)
+
 ## Purpose
 
 Over the times several different file formats have been developed just for storing configuration data for some program.
@@ -44,7 +46,7 @@ _Note_ that both section and key names are _case sensitive_ to allow for the bro
 The same is true for the values which are, of course, case sensitive.
 An application using this package, however, is free to interpret the values returned in any way they like.
 
-Please look at the [source code documentation](https://godoc.org/github.com/mwat56/go-ini) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
+Please look at the [source code documentation](https://godoc.org/github.com/mwat56/go-ini#TSections) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
 
 ## Licence
 
