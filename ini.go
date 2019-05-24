@@ -82,6 +82,8 @@ func removeQuotes(aString string) (rString string) {
 	return
 } // removeQuotes()
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 // String returns a string representation of the key/value pair.
 func (kv *TKeyVal) String() string {
 	if 0 == len(kv.Value) {
@@ -101,9 +103,7 @@ func (kv *TKeyVal) string0() string {
 	return fmt.Sprintf("%s = %s", kv.Key, kv.Value)
 } // string0()
 
-/*
- * Methods of TSection objects.
- */
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // AddKey appends a new key/value pair returning
 // `true` on success or `false` otherwise.
@@ -372,6 +372,8 @@ func (cs *TSection) UpdateKey(aKey, aValue string) bool {
 	// if aKey doesn't exist then create a new entry
 	return cs.AddKey(aKey, aValue)
 } // updateKey()
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // addSection appends a new INI section returning `true` on success
 // or `false` otherwise.

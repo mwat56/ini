@@ -1,6 +1,14 @@
 # INI
 
-[![GoDoc](https://godoc.org/github.com/mwat56/go-ini?status.svg)](https://godoc.org/github.com/mwat56/go-ini)
+[![GoDoc](https://godoc.org/github.com/mwat56/ini?status.svg)](https://godoc.org/github.com/mwat56/ini)
+[![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/ini/blob/master/LICENSE)
+
+- [INI](#ini)
+	- [Purpose](#purpose)
+	- [Installation](#installation)
+	- [Usage](#usage)
+	- [Licence](#licence)
+
 
 ## Purpose
 
@@ -12,7 +20,7 @@ This package provides the `TSections` class to read/parse, modify, and write suc
 
 You can use `Go` to install this package for you:
 
-    go get -u github.com/mwat56/go-ini
+    go get -u github.com/mwat56/ini
 
 ## Usage
 
@@ -46,7 +54,7 @@ _Note_ that both section and key names are _case sensitive_ to allow for the bro
 The same is true for the values which are, of course, case sensitive.
 An application using this package, however, is free to interpret the values returned in any way they like.
 
-Please look at the [source code documentation](https://godoc.org/github.com/mwat56/go-ini#TSections) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
+Please look at the [source code documentation](https://godoc.org/github.com/mwat56/ini#TSections) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
 
 ## Licence
 
