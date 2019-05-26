@@ -116,7 +116,12 @@ func (kv *TKeyVal) string0() string {
 // `aValue` the value of the key/value pair to add.
 func (cs *TSection) AddKey(aKey, aValue string) bool {
 	if 0 < len(aKey) {
-		*cs = append(*cs, TKeyVal{aKey, aValue})
+		idx := cs.IndexOf(aKey)
+		if 0 > idx {
+			*cs = append(*cs, TKeyVal{aKey, aValue})
+		} else {
+			(*cs)[idx].Value = aValue
+		}
 
 		if val, ok := cs.AsString(aKey); ok {
 			return (val == aValue)
@@ -273,6 +278,7 @@ func (cs *TSection) AsString(aKey string) (string, bool) {
 			return val.Value, true
 		}
 	}
+
 	return "", false
 } // AsString()
 
@@ -287,14 +293,22 @@ func (cs *TSection) Clear() *TSection {
 //
 // `aKey` the key to lookup.
 func (cs *TSection) HasKey(aKey string) bool {
-	for _, kv := range *cs {
+	return (0 <= cs.IndexOf(aKey))
+} // HasKey()
+
+// IndexOf returns the index of `aKey` in this INI section
+// or `-1` if not found.
+//
+// `aKey` the key to lookup.
+func (cs *TSection) IndexOf(aKey string) int {
+	for result, kv := range *cs {
 		if kv.Key == aKey {
-			return true
+			return result
 		}
 	}
 
-	return false
-} // HasKey()
+	return -1
+} // IndexOf()
 
 // RemoveKey removes `aKey` from this section.
 //
@@ -303,23 +317,21 @@ func (cs *TSection) HasKey(aKey string) bool {
 //
 // `aKey` the name of the key/value pair to remove.
 func (cs *TSection) RemoveKey(aKey string) bool {
-	slen := len(*cs) - 1 // new slice length (i.e. one shorter)
-	for idx, kv := range *cs {
-		if kv.Key != aKey {
-			continue
-		}
-		(*cs)[idx] = TKeyVal{}
-		if 0 == idx {
-			(*cs) = (*cs)[1:]
-		} else if idx == slen {
-			(*cs) = (*cs)[:slen]
-		} else {
-			(*cs) = append((*cs)[:idx], (*cs)[1+idx:]...)
-		}
+	idx := cs.IndexOf(aKey)
+	if 0 > idx {
 		return true
 	}
+	slen := len(*cs) - 1 // new slice length (i.e. one shorter)
+	(*cs)[idx] = TKeyVal{}
+	if 0 == idx {
+		(*cs) = (*cs)[1:]
+	} else if idx == slen {
+		(*cs) = (*cs)[:slen]
+	} else {
+		(*cs) = append((*cs)[:idx], (*cs)[1+idx:]...)
+	}
 
-	return (!cs.HasKey(aKey))
+	return (0 > cs.IndexOf(aKey))
 } // RemoveKey()
 
 // String returns a string representation of an INI section.
@@ -682,6 +694,21 @@ func (id *TSections) Load(aFilename string) (*TSections, error) {
 	return id, err
 } // Load()
 
+// Merge copies or merges all INI sections with all key/value pairs
+// into this list.
+//
+// `aINI` the INI list to merge with this one.
+func (id *TSections) Merge(aINI *TSections) *TSections {
+	aINI.Walk(id.mergeWalker)
+
+	return id
+} // Merge()
+
+// `mergeWalker()` inserts the given key/value pair in `aSection`.
+func (id *TSections) mergeWalker(aSection, aKey, aValue string) {
+	id.AddSectionKey(aSection, aKey, aValue)
+} // mergeWalker()
+
 // read parses the INI file returning the number of bytes read
 // and a possible error.
 //
@@ -949,14 +976,14 @@ type (
 	// in the INI list.
 	//
 	// see `Walk()`
-	TWalkFunc func(aSect, aKey, aVal string)
+	TWalkFunc func(aSection, aKey, aVal string)
 
 	// TIniWalker is used by `Walker()` when visiting an entry
 	// in the INI list.
 	//
 	// see `Walker()`
 	TIniWalker interface {
-		Walk(aSect, aKey, aVal string)
+		Walk(aSection, aKey, aVal string)
 	}
 )
 
@@ -967,13 +994,13 @@ type (
 func (id *TSections) Walk(aFunc TWalkFunc) {
 	// we ignore the secOrder list because the
 	// order of sections doesn't matter here.
-	for name := range id.sections {
-		if 0 == len(name) {
-			name = id.defSect
+	for section := range id.sections {
+		if 0 == len(section) {
+			section = id.defSect
 		}
-		cs, _ := id.sections[name]
+		cs, _ := id.sections[section]
 		for _, kv := range *cs {
-			aFunc(name, kv.Key, kv.Value)
+			aFunc(section, kv.Key, kv.Value)
 		}
 	}
 } // Walk()

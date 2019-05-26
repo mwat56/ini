@@ -1,3 +1,9 @@
+/*
+   Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+                  All rights reserved
+               EMail : <support@mwat.de>
+*/
+
 package ini
 
 import (
@@ -495,7 +501,7 @@ func TestIniSections_WriteFile(t *testing.T) {
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{"1", id, args{outFileName}, 4280, false},
+		{"1", id, args{outFileName}, 4253, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
