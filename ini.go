@@ -31,12 +31,10 @@ type (
 
 	// This opaque data structure is filled by e.g. `LoadFile(…)`.
 	tSections struct {
-		// name of default section:
-		defSect string
-		// slice containing the order of sections:
-		secOrder tOrder
-		// list of INI sections:
-		sections tIniSections
+		defSect  string       // name of default section
+		fname    string       // name of the INI file to use
+		secOrder tOrder       // slice containing the order of sections
+		sections tIniSections // list of INI sections
 	}
 )
 
@@ -632,8 +630,13 @@ func (il *TIniList) Clear() bool {
 	return ((0 == len(il.sections)) && (0 == len(il.secOrder)))
 } // Clear()
 
+// Filename returns the configured filename of the INI file.
+func (il *TIniList) Filename() string {
+	return il.fname
+} // Filename()
+
 // GetSection returns the INI section named `aSection`,
-// or `nil` if not found.
+// or an empty list if not found.
 func (il *TIniList) GetSection(aSection string) *TSection {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -642,7 +645,7 @@ func (il *TIniList) GetSection(aSection string) *TSection {
 		return result
 	}
 
-	return nil
+	return &TSection{}
 } // GetSection()
 
 // HasSection checks whether the INI data contain `aSection`.
@@ -680,15 +683,13 @@ func (il *TIniList) Len() int {
 	return len(il.sections)
 } // Len()
 
-// Load reads the given `aFilename` returning the data structure
+// Load reads the configured filename returning the data structure
 // read from the INI file and a possible error condition.
 //
 // This method reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
-//
-// `aFilename` is the name of the INI file to read.
-func (il *TIniList) Load(aFilename string) (*TIniList, error) {
-	file, rErr := os.Open(aFilename)
+func (il *TIniList) Load() (*TIniList, error) {
+	file, rErr := os.Open(il.fname)
 	if nil != rErr {
 		return il, rErr
 	}
@@ -852,12 +853,17 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 	return cs.RemoveKey(aKey)
 } // RemoveSectionKey()
 
-// Store writes all INI data to `aFilename`
+// SetFilename set the filename of the INI file to use.
+func (il *TIniList) SetFilename(aFilename string) *TIniList {
+	il.fname = aFilename
+
+	return il
+} // SetFilename()
+
+// Store writes all INI data to the configured filename
 // returning the number of bytes written and a possible error.
-//
-// `aFilename` is the name of the INI file to write.
-func (il *TIniList) Store(aFilename string) (int, error) {
-	file, err := os.Create(aFilename)
+func (il *TIniList) Store() (int, error) {
+	file, err := os.Create(il.fname)
 	if err != nil {
 		return 0, err
 	}
@@ -1020,26 +1026,21 @@ func (il *TIniList) Walker(aWalker TIniWalker) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// LoadFile reads the given `aFilename` returning the data structure
-// read from the INI file and a possible error condition.
+// New reads the given `aFilename` returning the data structure
+// read from that INI file and a possible error condition.
 //
 // This function reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
 //
 // `aFilename` is the name of the INI file to read.
-func LoadFile(aFilename string) (*TIniList, error) {
-	result := NewSections()
-
-	return result.Load(aFilename)
-} // LoadFile()
-
-// NewSections creates a new/empty `IniSections` structure.
-func NewSections() *TIniList {
-	return &TIniList{
+func New(aFilename string) (*TIniList, error) {
+	result := &TIniList{
 		defSect:  DefSection,
+		fname:    aFilename,
 		secOrder: make(tOrder, 0, defCapacity),
 		sections: make(tIniSections),
 	}
-} // NewIniSections()
+	return result.Load()
+} // New()
 
 /* _EoF_ */

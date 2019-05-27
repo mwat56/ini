@@ -180,12 +180,8 @@ func Benchmark_TSection_string0(b *testing.B) {
 } // Benchmark_TSection_string0()
 
 func TestTIniList_Clear(t *testing.T) {
-	cis, _ := LoadFile(inFileName)
-	type fields TIniList /* struct {
-		defSect  string
-		secOrder []string
-		sections TIniList
-	} */
+	cis, _ := New(inFileName)
+	type fields TIniList
 	cs := fields(*cis)
 	tests := []struct {
 		name   string
@@ -210,12 +206,8 @@ func TestTIniList_Clear(t *testing.T) {
 } // TestTIniList_Clear()
 
 func TestTIniList_RemoveSection(t *testing.T) {
-	cis, _ := LoadFile(inFileName)
-	type fields TIniList /* struct {
-		defSect  string
-		secOrder []string
-		sections TIniList
-	} */
+	cis, _ := New(inFileName)
+	type fields TIniList
 	type args struct {
 		aSection string
 	}
@@ -246,12 +238,8 @@ func TestTIniList_RemoveSection(t *testing.T) {
 } // TestTIniList_RemoveSection()
 
 func TestTIniList_RemoveSectionKey(t *testing.T) {
-	cis, _ := LoadFile(inFileName)
-	type fields TIniList /* struct {
-		defSect  string
-		secOrder tOrder
-		sections TIniList
-	} */
+	cis, _ := New(inFileName)
+	type fields TIniList
 	type args struct {
 		aSection string
 		aKey     string
@@ -409,12 +397,8 @@ func Benchmark_compare2(b *testing.B) {
 } // Benchmark_compare2()
 
 func TestTIniList_updateSectKey(t *testing.T) {
-	cis, _ := LoadFile(inFileName)
-	type fields TIniList /* struct {
-		defSect  string
-		secOrder []string
-		sections TIniList
-	} */
+	cis, _ := New(inFileName)
+	type fields TIniList
 	cs := fields(*cis)
 	type args struct {
 		aSection string
@@ -449,12 +433,8 @@ func TestTIniList_updateSectKey(t *testing.T) {
 } // TestTIniList_updateSectKey()
 
 func TestTIniList_UpdateSectKeyBool(t *testing.T) {
-	cis, _ := LoadFile(inFileName)
-	type fields TIniList /* struct {
-		defSect  string
-		secOrder []string
-		sections TIniList
-	} */
+	cis, _ := New(inFileName)
+	type fields TIniList
 	cs := fields(*cis)
 	type args struct {
 		aSection string
@@ -489,23 +469,22 @@ func TestTIniList_UpdateSectKeyBool(t *testing.T) {
 } // TestTIniList_UpdateSectKeyBool()
 
 func TestTIniList_WriteFile(t *testing.T) {
-	id, _ := LoadFile(inFileName)
+	id, _ := New(inFileName)
 	type args struct {
 		aFilename string
 	}
 	tests := []struct {
 		name       string
 		id         *TIniList
-		args       args
 		wantRBytes int
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{"1", id, args{outFileName}, 4253, false},
+		{"1", id, 4253, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRBytes, err := tt.id.Store(tt.args.aFilename)
+			gotRBytes, err := tt.id.Store()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TIniList.WriteFile() error = {%v}, wantErr {%v}", err, tt.wantErr)
 				return
@@ -522,7 +501,7 @@ func walkFunc(aSect, aKey, aVal string) {
 } // walkFunc()
 
 func TestTSections_Walk(t *testing.T) {
-	il, _ := LoadFile(inFileName)
+	il, _ := New(inFileName)
 	type args struct {
 		aFunc TWalkFunc
 	}
@@ -548,7 +527,7 @@ func (tw tTestWalk) Walk(aSect, aKey, aVal string) {
 } // walkFunc()
 
 func TestTSections_Walker(t *testing.T) {
-	il, _ := LoadFile(inFileName)
+	il, _ := New(inFileName)
 	type args struct {
 		aWalker TIniWalker
 	}
@@ -567,36 +546,3 @@ func TestTSections_Walker(t *testing.T) {
 		})
 	}
 } // TestTSections_Walker()
-
-func TestTIniList_AddSectionKey(t *testing.T) {
-	type fields struct {
-		defSect  string
-		secOrder tOrder
-		sections tIniSections
-	}
-	type args struct {
-		aSection string
-		aKey     string
-		aValue   string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			il := &TIniList{
-				defSect:  tt.fields.defSect,
-				secOrder: tt.fields.secOrder,
-				sections: tt.fields.sections,
-			}
-			if got := il.AddSectionKey(tt.args.aSection, tt.args.aKey, tt.args.aValue); got != tt.want {
-				t.Errorf("TIniList.AddSectionKey() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
