@@ -1,7 +1,7 @@
 # INI
 
-[![Golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
-[![GoDoc](https://godoc.org/github.com/mwat56/ini?status.svg)](https://godoc.org/github.com/mwat56/ini)
+[![Golang](https://img.shields.io/badge/Language-Go-green.svg)](https://golang.org/)
+[![GoDoc](https://godoc.org/github.com/mwat56/ini?status.svg)](https://godoc.org/github.com/mwat56/ini/)
 [![Issues](https://img.shields.io/github/issues/mwat56/ini.svg)](https://github.com/mwat56/ini/issues?q=is%3Aopen+is%3Aissue)
 [![Size](https://img.shields.io/github/repo-size/mwat56/ini.svg)](https://github.com/mwat56/ini/)
 [![Tag](https://img.shields.io/github/tag/mwat56/ini.svg)](https://github.com/mwat56/ini/tags)
@@ -34,14 +34,14 @@ An INI file usually looks like this:
     [aSectionName]
         key1 = value 1
         key2 = value2
-        …
+        # …
 
     [anotherSection]
         key1 = value1
         key2 = value 2 is \
         really long and\
         spans several lines
-        …
+        # …
 
 Leading whitespace is ignored, empty lines and those beginning with either a semicolon (`;`) or a number sign (`#`) are skipped (and not preserved when overwriting the file).
 Lines that can't be identified as either a _section heading_ or a _key/value pair_ are silently ignored as well.
