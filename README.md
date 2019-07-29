@@ -2,15 +2,16 @@
 
 [![Golang](https://img.shields.io/badge/Language-Go-green.svg?style=flat)](https://golang.org)
 [![GoDoc](https://godoc.org/github.com/mwat56/ini?status.svg)](https://godoc.org/github.com/mwat56/ini)
-[![Tag](https://img.shields.io/github/tag/mwat56/ini.svg?style=flat-square)](https://github.com/mwat56/ini/releases)
-[![License](https://img.shields.io/eclipse-marketplace/l/notepad4e.svg)](https://github.com/mwat56/ini/blob/master/LICENSE)
+[![Issues](https://img.shields.io/github/issues/mwat56/ini.svg)](https://github.com/mwat56/ini/issues?q=is%3Aopen+is%3Aissue)
+[![Size](https://img.shields.io/github/repo-size/mwat56/ini.svg)](https://github.com/mwat56/ini/)
+[![Tag](https://img.shields.io/github/tag/mwat56/ini.svg)](https://github.com/mwat56/ini/tags)
+[![License](https://img.shields.io/github/license/mwat56/ini.svg)](https://github.com/mwat56/ini/blob/master/LICENSE)
 
 - [INI](#ini)
 	- [Purpose](#purpose)
 	- [Installation](#installation)
 	- [Usage](#usage)
 	- [Licence](#licence)
-
 
 ## Purpose
 
