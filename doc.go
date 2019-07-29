@@ -1,5 +1,5 @@
 /*
-Package ini implementes an INI file reader/writer.
+Package ini implements an INI file reader/writer.
 
     Copyright © 2019 M.Watermann, 10247 Berlin, Germany
                     All rights reserved
