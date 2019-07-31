@@ -354,7 +354,7 @@ func (cs *TSection) string0() string {
 	var result bytes.Buffer
 
 	for _, kv := range *cs {
-		result.WriteString(kv.string0() + "\n")
+		_, _ = result.WriteString(kv.string0() + "\n")
 	}
 
 	return result.String()
@@ -899,7 +899,7 @@ func (il *TIniList) string0() string {
 			name = il.defSect
 		}
 		if cs, exists := il.sections[name]; exists {
-			result.WriteString(fmt.Sprintf("\n[%s]\n%s", name, cs.string0()))
+			_, _ = result.WriteString(fmt.Sprintf("\n[%s]\n%s", name, cs.string0()))
 		}
 	}
 
