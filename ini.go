@@ -2,6 +2,8 @@
 // and methods to access the section's key/value pairs.
 package ini
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 import (
 	"bufio"
 	"bytes"
@@ -812,22 +814,6 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		if name != aSection {
 			continue
 		}
-		/*
-			if 0 == idx {
-				if 0 == olen {
-					// the only list entry: replace by an empty list
-					il.secOrder = make(tOrder, 0, defCapacity)
-				} else {
-					// first list entry: move the remaining data
-					il.secOrder = il.secOrder[1:]
-				}
-			} else if idx == olen {
-				// last list entry
-				il.secOrder = il.secOrder[:idx]
-			} else {
-				il.secOrder = append(il.secOrder[:idx], il.secOrder[idx+1:]...)
-			}
-		*/
 		switch idx {
 		case 0:
 			if 0 == olen {
@@ -1027,7 +1013,7 @@ func (il *TIniList) Walk(aFunc TWalkFunc) {
 		if 0 == len(section) {
 			section = il.defSect
 		}
-		cs, _ := il.sections[section]
+		cs := il.sections[section]
 		for _, kv := range *cs {
 			aFunc(section, kv.Key, kv.Value)
 		}

@@ -6,6 +6,8 @@
 
 package ini
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 import (
 	"fmt"
 	"testing"
@@ -23,10 +25,6 @@ func Test_tKeyVal_String(t *testing.T) {
 	rs2 := "key2 ="
 	kv3 := TKeyVal{"", ""}
 	rs3 := " ="
-	type fields struct {
-		Key   string
-		Value string
-	}
 	tests := []struct {
 		name string
 		kv   *TKeyVal
@@ -293,11 +291,6 @@ func TestTIniList_String(t *testing.T) {
 		},
 	}
 	rl1 := "\n[Default]\nkey1 = val1\nkey2 = val2\n\n[Sect2]\nkey3 = val3\nkey4 =\n"
-	type fields struct {
-		defSect  string
-		secOrder tOrder
-		Sections TIniList
-	}
 	tests := []struct {
 		name   string
 		fields TIniList
@@ -470,9 +463,6 @@ func TestTIniList_UpdateSectKeyBool(t *testing.T) {
 
 func TestTIniList_WriteFile(t *testing.T) {
 	id, _ := New(inFileName)
-	type args struct {
-		aFilename string
-	}
 	tests := []struct {
 		name       string
 		id         *TIniList
