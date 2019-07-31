@@ -793,10 +793,10 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		return true
 	}
 	delete(il.sections, aSection)
-	if 0 == len(il.sections) {
-		exists = false
-	} else if _, exists = il.sections[aSection]; exists {
-		return false
+	if 0 < len(il.sections) {
+		if _, exists = il.sections[aSection]; exists {
+			return false // this should never happen!
+		}
 	}
 
 	// len - 1: because list is zero-based
