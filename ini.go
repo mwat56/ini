@@ -326,11 +326,12 @@ func (cs *TSection) RemoveKey(aKey string) bool {
 	}
 	slen := len(*cs) - 1 // new slice length (i.e. one shorter)
 	(*cs)[idx] = TKeyVal{}
-	if 0 == idx {
+	switch idx {
+	case 0:
 		(*cs) = (*cs)[1:]
-	} else if idx == slen {
+	case slen:
 		(*cs) = (*cs)[:slen]
-	} else {
+	default:
 		(*cs) = append((*cs)[:idx], (*cs)[1+idx:]...)
 	}
 
@@ -811,7 +812,24 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		if name != aSection {
 			continue
 		}
-		if 0 == idx {
+		/*
+			if 0 == idx {
+				if 0 == olen {
+					// the only list entry: replace by an empty list
+					il.secOrder = make(tOrder, 0, defCapacity)
+				} else {
+					// first list entry: move the remaining data
+					il.secOrder = il.secOrder[1:]
+				}
+			} else if idx == olen {
+				// last list entry
+				il.secOrder = il.secOrder[:idx]
+			} else {
+				il.secOrder = append(il.secOrder[:idx], il.secOrder[idx+1:]...)
+			}
+		*/
+		switch idx {
+		case 0:
 			if 0 == olen {
 				// the only list entry: replace by an empty list
 				il.secOrder = make(tOrder, 0, defCapacity)
@@ -819,10 +837,10 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 				// first list entry: move the remaining data
 				il.secOrder = il.secOrder[1:]
 			}
-		} else if idx == olen {
+		case olen:
 			// last list entry
 			il.secOrder = il.secOrder[:idx]
-		} else {
+		default:
 			il.secOrder = append(il.secOrder[:idx], il.secOrder[idx+1:]...)
 		}
 		return true
