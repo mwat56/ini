@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	inFileName  = "testin.ini"
-	outFileName = "testout.ini"
+	inFileName = "testin.ini"
 )
 
 func Test_tKeyVal_String(t *testing.T) {
