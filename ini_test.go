@@ -56,15 +56,6 @@ func Benchmark_tKeyVal_String(b *testing.B) {
 	}
 } // Benchmark_tKeyVal_String()
 
-func Benchmark_tKeyVal_string0(b *testing.B) {
-	kv1 := TKeyVal{"key1", "val1"}
-	for n := 0; n < b.N; n++ {
-		if 0 > len(kv1.string0()) {
-			continue
-		}
-	}
-} // Benchmark_tKeyVal_string0()
-
 func Test_removeQuotes(t *testing.T) {
 	si1 := "'this is a text'"
 	so1 := "this is a text"
@@ -120,7 +111,7 @@ func Test_tSection_String(t *testing.T) {
 } // Test_tSection_String()
 
 func Test_tSection_UpdateKey(t *testing.T) {
-	cs1 := make(TSection, 0, defCapacity)
+	cs1 := make(TSection, 0, ilDefCapacity)
 	cs1.AddKey("Key1", "Value1")
 	cs1.AddKey("Key2", "Value2")
 	type args struct {
@@ -161,20 +152,6 @@ func Benchmark_TSection_String(b *testing.B) {
 		}
 	}
 } // Benchmark_TSection_String()
-
-func Benchmark_TSection_string0(b *testing.B) {
-	sl1 := TSection{
-		TKeyVal{"key1", "val1"},
-		TKeyVal{"key2", "val2"},
-		TKeyVal{"key3", "val3"},
-		TKeyVal{"key4", ""},
-	}
-	for n := 0; n < b.N; n++ {
-		if 0 > len(sl1.string0()) {
-			continue
-		}
-	}
-} // Benchmark_TSection_string0()
 
 func TestTIniList_Clear(t *testing.T) {
 	cis, _ := New(inFileName)
@@ -337,32 +314,6 @@ func Benchmark_TSections_String(b *testing.B) {
 		}
 	}
 } // Benchmark_TSections_String()
-
-func Benchmark_TSections_string0(b *testing.B) {
-	id1 := TIniList{
-		defSect: "Default",
-		secOrder: tOrder{
-			"Default",
-			"Sect2",
-			"NOOP",
-		},
-		sections: tIniSections{
-			"Sect2": &TSection{
-				TKeyVal{"key3", "val3"},
-				TKeyVal{"key4", ""},
-			},
-			"Default": &TSection{
-				TKeyVal{"key1", "val1"},
-				TKeyVal{"key2", "val2"},
-			},
-		},
-	}
-	for n := 0; n < b.N; n++ {
-		if 0 > len(id1.string0()) {
-			continue
-		}
-	}
-} // Benchmark_TSections_string0()
 
 func compare1(aString string) {
 	if "" == aString {

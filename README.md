@@ -53,7 +53,7 @@ By that mechanism you can use really long values spaning several lines.
 
 You can create a `TIniList` instance by simply calling `ini.New(aFilename)` and then using the numerous methods (including `Load()` and `Store()`).
 
-_Note_ that both section and key names are _case sensitive_ to allow for the broadest possible range when naming them.
+_Note_ that both, section and key names, are _case sensitive_ to allow for the broadest possible range when naming them.
 The same is true for the key/value pairs which are, of course, case sensitive.
 An application using this package, however, is free to interpret the values returned in any way they like.
 
