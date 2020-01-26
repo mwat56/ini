@@ -1,3 +1,9 @@
+/*
+   Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
+                  All rights reserved
+              EMail : <support@mwat.de>
+*/
+
 // Package ini provides functions to read/write INI files from/to disc
 // and methods to access the section's key/value pairs.
 package ini
@@ -33,7 +39,7 @@ type (
 	// This opaque data structure is filled by e.g. `LoadFile(…)`.
 	tSections struct {
 		defSect  string       // name of default section
-		fname    string       // name of the INI file to use
+		fName    string       // name of the INI file to use
 		secOrder tOrder       // slice containing the order of sections
 		sections tIniSections // list of INI sections
 	}
@@ -315,13 +321,13 @@ func (cs *TSection) RemoveKey(aKey string) bool {
 	if 0 > idx {
 		return true
 	}
-	slen := len(*cs) - 1 // new slice length (i.e. one shorter)
+	sLen := len(*cs) - 1 // new slice length (i.e. one shorter)
 	(*cs)[idx] = TKeyVal{}
 	switch idx {
 	case 0:
 		(*cs) = (*cs)[1:]
-	case slen:
-		(*cs) = (*cs)[:slen]
+	case sLen:
+		(*cs) = (*cs)[:sLen]
 	default:
 		(*cs) = append((*cs)[:idx], (*cs)[1+idx:]...)
 	}
@@ -612,7 +618,7 @@ func (il *TIniList) Clear() bool {
 
 // Filename returns the configured filename of the INI file.
 func (il *TIniList) Filename() string {
-	return il.fname
+	return il.fName
 } // Filename()
 
 // GetSection returns the INI section named `aSection`,
@@ -673,7 +679,7 @@ func (il *TIniList) Len() int {
 // This method reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
 func (il *TIniList) Load() (*TIniList, error) {
-	file, rErr := os.Open(il.fname)
+	file, rErr := os.Open(il.fName)
 	if nil != rErr {
 		return il, rErr
 	}
@@ -842,7 +848,7 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 //
 //	`aFilename` is the name to use for the INI file.
 func (il *TIniList) SetFilename(aFilename string) *TIniList {
-	il.fname = aFilename
+	il.fName = aFilename
 
 	return il
 } // SetFilename()
@@ -850,7 +856,7 @@ func (il *TIniList) SetFilename(aFilename string) *TIniList {
 // Store writes all INI data to the configured filename
 // returning the number of bytes written and a possible error.
 func (il *TIniList) Store() (int, error) {
-	file, err := os.Create(il.fname)
+	file, err := os.Create(il.fName)
 	if err != nil {
 		return 0, err
 	}
@@ -1004,7 +1010,7 @@ func (il *TIniList) Walker(aWalker TIniWalker) {
 func New(aFilename string) (*TIniList, error) {
 	result := &TIniList{
 		defSect:  DefSection,
-		fname:    aFilename,
+		fName:    aFilename,
 		secOrder: make(tOrder, 0, ilDefCapacity),
 		sections: make(tIniSections),
 	}
