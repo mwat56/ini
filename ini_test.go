@@ -1,12 +1,10 @@
 /*
-   Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+   Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
                   All rights reserved
                EMail : <support@mwat.de>
 */
 
 package ini
-
-//lint:file-ignore ST1017 - I prefer Yoda conditions
 
 import (
 	"fmt"
@@ -84,74 +82,6 @@ func Test_removeQuotes(t *testing.T) {
 		})
 	}
 } // Test_removeQuotes
-
-func Test_tSection_String(t *testing.T) {
-	sl1 := TSection{
-		TKeyVal{"key1", "val1"},
-		TKeyVal{"key2", "val2"},
-		TKeyVal{"key3", "val3"},
-		TKeyVal{"key4", ""},
-	}
-	rl1 := "key1 = val1\nkey2 = val2\nkey3 = val3\nkey4 =\n"
-	tests := []struct {
-		name string
-		cs   *TSection
-		want string
-	}{
-		// TODO: Add test cases.
-		{" 1", &sl1, rl1},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.cs.String(); got != tt.want {
-				t.Errorf("tSection.String() = {%v}, want {%v}", got, tt.want)
-			}
-		})
-	}
-} // Test_tSection_String()
-
-func Test_tSection_UpdateKey(t *testing.T) {
-	cs1 := make(TSection, 0, ilDefCapacity)
-	cs1.AddKey("Key1", "Value1")
-	cs1.AddKey("Key2", "Value2")
-	type args struct {
-		aKey   string
-		aValue string
-	}
-	tests := []struct {
-		name string
-		cs   *TSection
-		args args
-		want bool
-	}{
-		// TODO: Add test cases.
-		{" 0", &cs1, args{"", ""}, false},
-		{" 1", &cs1, args{"Key1", "Value 1 (new)"}, true},
-		{" 2", &cs1, args{"Key 2", "Value 2 (new)"}, true},
-		{" 3", &cs1, args{"Key2", "Value 2 (new)"}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.cs.UpdateKey(tt.args.aKey, tt.args.aValue); got != tt.want {
-				t.Errorf("TSection.UpdateKey() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-} // Test_tSection_UpdateKey()
-
-func Benchmark_TSection_String(b *testing.B) {
-	sl1 := TSection{
-		TKeyVal{"key1", "val1"},
-		TKeyVal{"key2", "val2"},
-		TKeyVal{"key3", "val3"},
-		TKeyVal{"key4", ""},
-	}
-	for n := 0; n < b.N; n++ {
-		if 0 > len(sl1.String()) {
-			continue
-		}
-	}
-} // Benchmark_TSection_String()
 
 func TestTIniList_Clear(t *testing.T) {
 	cis, _ := New(inFileName)
@@ -439,6 +369,111 @@ func TestTIniList_WriteFile(t *testing.T) {
 func walkFunc(aSect, aKey, aVal string) {
 	fmt.Printf("\nSection: %s\nKey: %s\nValue: %s\n", aSect, aKey, aVal)
 } // walkFunc()
+
+func TestTSection_AsBool(t *testing.T) {
+	sl1 := TSection{
+		TKeyVal{"key1", "val1"},
+		TKeyVal{"key2", `True`},
+		TKeyVal{"key3", `0`},
+		TKeyVal{"key4", ``},
+	}
+	type args struct {
+		aKey string
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     args
+		wantRVal bool
+		wantROK  bool
+	}{
+		// TODO: Add test cases.
+		{" 1", &sl1, args{`key1`}, false, false},
+		{" 2", &sl1, args{`key2`}, true, true},
+		{" 3", &sl1, args{`key3`}, false, true},
+		{" 4", &sl1, args{`key4`}, false, true},
+		{" 5", &sl1, args{`key5`}, false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsBool(tt.args.aKey)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("TSection.AsBool() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("TSection.AsBool() gotROK = %v, want %v", gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsBool()
+
+func TestTSection_String(t *testing.T) {
+	sl1 := TSection{
+		TKeyVal{"key1", "val1"},
+		TKeyVal{"key2", "val2"},
+		TKeyVal{"key3", "val3"},
+		TKeyVal{"key4", ""},
+	}
+	rl1 := "key1 = val1\nkey2 = val2\nkey3 = val3\nkey4 =\n"
+	tests := []struct {
+		name string
+		cs   *TSection
+		want string
+	}{
+		// TODO: Add test cases.
+		{" 1", &sl1, rl1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cs.String(); got != tt.want {
+				t.Errorf("tSection.String() = {%v}, want {%v}", got, tt.want)
+			}
+		})
+	}
+} // TestTSection_String()
+
+func Benchmark_TSection_String(b *testing.B) {
+	sl1 := TSection{
+		TKeyVal{"key1", "val1"},
+		TKeyVal{"key2", "val2"},
+		TKeyVal{"key3", "val3"},
+		TKeyVal{"key4", ""},
+	}
+	for n := 0; n < b.N; n++ {
+		if 0 > len(sl1.String()) {
+			continue
+		}
+	}
+} // Benchmark_TSection_String()
+
+func TestTSection_UpdateKey(t *testing.T) {
+	cs1 := make(TSection, 0, ilDefCapacity)
+	cs1.AddKey("Key1", "Value1")
+	cs1.AddKey("Key2", "Value2")
+	type args struct {
+		aKey   string
+		aValue string
+	}
+	tests := []struct {
+		name string
+		cs   *TSection
+		args args
+		want bool
+	}{
+		// TODO: Add test cases.
+		{" 0", &cs1, args{"", ""}, false},
+		{" 1", &cs1, args{"Key1", "Value 1 (new)"}, true},
+		{" 2", &cs1, args{"Key 2", "Value 2 (new)"}, true},
+		{" 3", &cs1, args{"Key2", "Value 2 (new)"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cs.UpdateKey(tt.args.aKey, tt.args.aValue); got != tt.want {
+				t.Errorf("TSection.UpdateKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+} // TestTSection_UpdateKey()
 
 func TestTSections_Walk(t *testing.T) {
 	il, _ := New(inFileName)

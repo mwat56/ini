@@ -4,8 +4,6 @@
               EMail : <support@mwat.de>
 */
 
-// Package ini provides functions to read/write INI files from/to disc
-// and methods to access the section's key/value pairs.
 package ini
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
@@ -49,16 +47,16 @@ type (
 //
 // This opaque data structure is filled by e.g. `LoadFile(…)`.
 //
-// For accessing the sections and key/value pairs
-// it provides the appropriate methods.
+// For accessing the sections and key/value pairs it provides
+// the appropriate methods.
 type TIniList tSections
 
 const (
 	ilDefCapacity = 16
 
-	// DefSection is the name of the default section in the INI
-	// file which is used when there are key/value pairs in the
-	// file without a preceding section header like `[SectName]`.
+	// DefSection is the name of the default section in the INI file
+	// which is used when there are key/value pairs in the file without
+	// a preceding section header like `[SectName]`.
 	DefSection = "Default"
 )
 
@@ -66,13 +64,17 @@ const (
 var (
 	// match: [section]
 	ilSectionRE = regexp.MustCompile(`^\[\s*([^\]]*?)\s*]$`)
+
 	// match: key = val
 	ilKeyValRE = regexp.MustCompile(`^([^=]+?)\s*=\s*(.*)$`)
+
 	// match: quoted ' " string " '
 	ilQuotesRE = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
 // `removeQuotes()` returns a quoted string w/o the quote characters.
+//
+//	`aString` The quoted string to process.
 func removeQuotes(aString string) (rString string) {
 	// remove leading/trailing UTF whitespace:
 	rString = strings.TrimSpace(aString)
@@ -90,6 +92,8 @@ func removeQuotes(aString string) (rString string) {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // String returns a string representation of the key/value pair.
+//
+// The returned string follows the pattern `Key = value`.
 func (kv *TKeyVal) String() string {
 	if 0 == len(kv.Value) {
 		return kv.Key + " ="
@@ -100,15 +104,13 @@ func (kv *TKeyVal) String() string {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// AddKey appends a new key/value pair returning
-// `true` on success or `false` otherwise.
+// AddKey appends a new key/value pair returning `true` on success or
+// `false` otherwise.
 //
-// If `aKey` is an empty string the method's result
-// will be `false`.
+// If `aKey` is an empty string the method's result will be `false`.
 //
-//	`aKey` the key of the key/value pair to add.
-//
-//	`aValue` the value of the key/value pair to add.
+//	`aKey` The key of the key/value pair to add.
+//	`aValue` The value of the key/value pair to add.
 func (cs *TSection) AddKey(aKey, aValue string) bool {
 	if 0 < len(aKey) {
 		idx := cs.IndexOf(aKey)
@@ -126,31 +128,30 @@ func (cs *TSection) AddKey(aKey, aValue string) bool {
 	return false
 } // AddKey()
 
-// AsBool returns the value of `aKey` in `aSection` as a boolean value.
+// AsBool returns the value of `aKey` as a boolean value.
 //
-// If the given `aKey` doesn't exist then the second (bool)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (bool) return value
+// will be `false`.
 //
 // "0", "f", "F", "n" and "N" are considered `false` while
-// "1", "t", "T", "y" and "Y" are considered 'true';
+// "1", "t", "T", "y" and "Y" are considered `true`;
 // these values will be given in the first result value.
 // All other values will give `false` as the second (`rOK`) result value.
 //
-// This method actually checks only the first character of the key's
-// value so one can write e.g. "false" or "NO" (for a `false` result),
-// or "True" or "yes" (for a 'true' result).
+// This method actually checks only the first character of the key's value
+// so one can write e.g. "false" or "NO" (for a `false` result), or "True"
+// or "yes" (for a `true` result).
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsBool(aKey string) (rVal, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
-		val = val[:1]
-		switch val {
-		case "0", "f", "F", "n", "N":
-			rVal, rOK = false, true
-		case "1", "t", "T", "y", "Y":
-			rVal, rOK = true, true
+		val += `0` // in case of empty string: default FALSE
+		switch val[:1] {
+		case `0`, `f`, `F`, `n`, `N`:
+			return false, true
+		case `1`, `t`, `T`, `y`, `Y`:
+			return true, true
 		}
 	}
 
@@ -163,10 +164,10 @@ func (cs *TSection) AsBool(aKey string) (rVal, rOK bool) {
 // value will be `false`.
 //
 // If the string is well-formed and near a valid floating point number,
-// `AsFloat32` returns the nearest floating point number rounded
-// using IEEE754 unbiased rounding.
+// `AsFloat32` returns the nearest floating point number rounded using
+// IEEE754 unbiased rounding.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsFloat32(aKey string) (rVal float32, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if f64, err := strconv.ParseFloat(val, 32); nil == err {
@@ -183,14 +184,14 @@ func (cs *TSection) AsFloat32(aKey string) (rVal float32, rOK bool) {
 // value will be `false`.
 //
 // If the string is well-formed and near a valid floating point number,
-// `AsFloat64` returns the nearest floating point number rounded
-// using IEEE754 unbiased rounding.
+// `AsFloat64` returns the nearest floating point number rounded using
+// IEEE754 unbiased rounding.
 //
 // 	aKey` the name of the key to lookup.
 func (cs *TSection) AsFloat64(aKey string) (rVal float64, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if f64, err := strconv.ParseFloat(val, 64); nil == err {
-			rVal, rOK = f64, true
+			return f64, true
 		}
 	}
 
@@ -199,14 +200,14 @@ func (cs *TSection) AsFloat64(aKey string) (rVal float64, rOK bool) {
 
 // AsInt returns the value of `aKey` as an integer.
 //
-// If the given `aKey` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (`rOK`) return value
+// will be `false`.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsInt(aKey string) (rVal int, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if i, err := strconv.Atoi(val); nil == err {
-			rVal, rOK = i, true
+			return i, true
 		}
 	}
 
@@ -215,14 +216,14 @@ func (cs *TSection) AsInt(aKey string) (rVal int, rOK bool) {
 
 // AsInt16 returns the value of `aKey` as a 16bit integer.
 //
-// If the given `aKey` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (`rOK`) return value
+// will be `false`.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsInt16(aKey string) (rVal int16, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if i64, err := strconv.ParseInt(val, 10, 16); nil == err {
-			rVal, rOK = int16(i64), true
+			return int16(i64), true
 		}
 	}
 
@@ -231,14 +232,14 @@ func (cs *TSection) AsInt16(aKey string) (rVal int16, rOK bool) {
 
 // AsInt32 returns the value of `aKey` as a 32bit integer.
 //
-// If the given `aKey` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (`rOK`) return value
+// will be `false`.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsInt32(aKey string) (rVal int32, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if i64, err := strconv.ParseInt(val, 10, 32); nil == err {
-			rVal, rOK = int32(i64), true
+			return int32(i64), true
 		}
 	}
 
@@ -247,14 +248,14 @@ func (cs *TSection) AsInt32(aKey string) (rVal int32, rOK bool) {
 
 // AsInt64 returns the value of `aKey` as a 64bit integer.
 //
-// If the given `aKey` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (`rOK`) return value
+// will be `false`.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsInt64(aKey string) (rVal int64, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if i64, err := strconv.ParseInt(val, 10, 64); nil == err {
-			rVal, rOK = i64, true
+			return i64, true
 		}
 	}
 
@@ -263,14 +264,14 @@ func (cs *TSection) AsInt64(aKey string) (rVal int64, rOK bool) {
 
 // AsString returns the value of `aKey` as a string.
 //
-// If the given `aKey` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` doesn't exist then the second (`rOK`) return value
+// will be `false`.
 //
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (cs *TSection) AsString(aKey string) (rVal string, rOK bool) {
 	for _, val := range *cs {
 		if val.Key == aKey {
-			rVal, rOK = val.Value, true
+			return val.Value, true
 		}
 	}
 
@@ -286,15 +287,15 @@ func (cs *TSection) Clear() *TSection {
 
 // HasKey returns whether `aKey` exists in this INI section.
 //
-//	`aKey` the key to lookup.
+//	`aKey` The key to lookup.
 func (cs *TSection) HasKey(aKey string) bool {
 	return (0 <= cs.IndexOf(aKey))
 } // HasKey()
 
-// IndexOf returns the index of `aKey` in this INI section
-// or `-1` if not found.
+// IndexOf returns the index of `aKey` in this INI section or `-1`
+// if not found.
 //
-//	`aKey` the key to lookup.
+//	`aKey` The key to lookup.
 func (cs *TSection) IndexOf(aKey string) int {
 	for result, kv := range *cs {
 		if kv.Key == aKey {
@@ -312,10 +313,10 @@ func (cs *TSection) Len() int {
 
 // RemoveKey removes `aKey` from this section.
 //
-// This method returns 'true' if `aKey` doesn't exist at all,
-// or if `aKey` was successfully removed, or `false` otherwise.
+// This method returns 'true' if `aKey` doesn't exist at all, or if `aKey`
+// was successfully removed, or `false` otherwise.
 //
-//	`aKey` the name of the key/value pair to remove.
+//	`aKey` The name of the key/value pair to remove.
 func (cs *TSection) RemoveKey(aKey string) bool {
 	idx := cs.IndexOf(aKey)
 	if 0 > idx {
@@ -346,19 +347,16 @@ func (cs *TSection) String() (rString string) {
 	return
 } // String()
 
-// UpdateKey replaces the current value of `aKey`
-// by the provided new `aValue`.
+// UpdateKey replaces the current value of `aKey` by the provided
+// new `aValue`.
 //
-// In case `aKey` doesn't already exist in the list
-// (and therefor can't be updated) it will be added
-// by calling the `AddKey()` method.
+// In case `aKey` doesn't already exist in the list (and therefor can't
+// be updated) it will be added by calling the `AddKey()` method.
 //
-// If `aKey` is an empty string the method's result
-// will be `false`.
+// If `aKey` is an empty string the method's result will be `false`.
 //
-//	`aKey` the key of the key/value pair to update.
-//
-//	`aValue` the value of the key/value pair to update.
+//	`aKey` The key of the key/value pair to update.
+//	`aValue` The value of the key/value pair to update.
 func (cs *TSection) UpdateKey(aKey, aValue string) bool {
 	if 0 == len(aKey) {
 		return false
@@ -376,10 +374,10 @@ func (cs *TSection) UpdateKey(aKey, aValue string) bool {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// addSection appends a new INI section returning `true` on success
-// or `false` otherwise.
+// addSection appends a new INI section returning `true` on success or
+// `false` otherwise.
 //
-//	`aSection` name of the INI section to add.
+//	`aSection` The name of the INI section to add.
 func (il *TIniList) addSection(aSection string) bool {
 	if _, exists := il.sections[aSection]; exists {
 		return true // already there: nothing more to do
@@ -398,14 +396,12 @@ func (il *TIniList) addSection(aSection string) bool {
 	return false
 } // addSection()
 
-// AddSectionKey appends a new key/value pair to `aSection`
-// returning `true` on success or `false` otherwise.
+// AddSectionKey appends a new key/value pair to `aSection` returning `true`
+// on success or `false` otherwise.
 //
-//	`aSection` name of the INI section to use.
-//
-//	`aKey` the key of the key/value pair to add.
-//
-//	`aValue` the value of the key/value pair to add.
+//	`aSection` The name of the INI section to use.
+//	`aKey` The key of the key/value pair to add.
+//	`aValue` The value of the key/value pair to add.
 func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -427,21 +423,20 @@ func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
 
 // AsBool returns the value of `aKey` in `aSection` as a boolean value.
 //
-// If the given aKey in `aSection` doesn't exist then the second
-// (bool) return value will be `false`.
+// If the given aKey in `aSection` doesn't exist then the second (bool) return
+// value will be `false`.
 //
 // "0", "f", "F", "n" and "N" are considered `false` while
 // "1", "t", "T", "y" and "Y" are considered 'true';
 // these values will be given in the first result value.
 // All other values will give `false` as the second result value.
 //
-// This method actually checks only the first character of the key's
-// value so one can write e.g. "false" or "NO" (for a `false`
-// result), or "True" or "yes" (for a 'true' result).
+// This method actually checks only the first character of the key's value
+// so one can write e.g. "false" or "NO" (for a `false` result), or "True" or
+// "yes" (for a 'true' result).
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsBool(aSection, aKey string) (rVal, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -453,19 +448,18 @@ func (il *TIniList) AsBool(aSection, aKey string) (rVal, rOK bool) {
 	return
 } // AsBool()
 
-// AsFloat32 returns the value of `aKey` in `aSection` as
-// a 32bit floating point.
+// AsFloat32 returns the value of `aKey` in `aSection` as a 32bit floating
+// point.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (bool) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (bool)
+// return value will be `false`.
 //
-// If s is well-formed and near a valid floating point number,
-// `AsFloat32` returns the nearest floating point number rounded
-// using IEEE754 unbiased rounding.
+// If the key's value is well-formed and near a valid floating point number,
+// `AsFloat32` returns the nearest floating point number rounded using IEEE754
+// unbiased rounding.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -477,19 +471,18 @@ func (il *TIniList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
 	return
 } // AsFloat32()
 
-// AsFloat64 returns the value of `aKey` in `aSection` as a 64bit
-// floating point.
+// AsFloat64 returns the value of `aKey` in `aSection` as a 64bit floating
+// point.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
-// If s is well-formed and near a valid floating point number,
-// `AsFloat64` returns the nearest floating point number rounded
-// using IEEE754 unbiased rounding.
+// If the key's value is well-formed and near a valid floating point number,
+// `AsFloat64` returns the nearest floating point number rounded using IEEE754
+// unbiased rounding.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -503,12 +496,11 @@ func (il *TIniList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
 
 // AsInt returns the value of `aKey` in `aSection` as an integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsInt(aSection, aKey string) (rVal int, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -522,12 +514,11 @@ func (il *TIniList) AsInt(aSection, aKey string) (rVal int, rOK bool) {
 
 // AsInt16 return the value of `aKey` in `aSection` as a 16bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsInt16(aSection, aKey string) (rVal int16, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -541,12 +532,11 @@ func (il *TIniList) AsInt16(aSection, aKey string) (rVal int16, rOK bool) {
 
 // AsInt32 return the value of `aKey` in `aSection` as a 32bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsInt32(aSection, aKey string) (rVal int32, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -560,12 +550,11 @@ func (il *TIniList) AsInt32(aSection, aKey string) (rVal int32, rOK bool) {
 
 // AsInt64 return the value of `aKey` in `aSection` as a 64bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsInt64(aSection, aKey string) (rVal int64, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -579,12 +568,11 @@ func (il *TIniList) AsInt64(aSection, aKey string) (rVal int64, rOK bool) {
 
 // AsString returns the value of `aKey` in `aSection` as a string.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
-//
-//	`aKey` the name of the key to lookup.
+//	`aKey` The name of the key to lookup.
 func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -621,10 +609,10 @@ func (il *TIniList) Filename() string {
 	return il.fName
 } // Filename()
 
-// GetSection returns the INI section named `aSection`,
-// or an empty list if not found.
+// GetSection returns the INI section named `aSection`, or an empty list
+// if not found.
 //
-//	`aSection` is the name of the INI section to lookup.
+//	`aSection` The name of the INI section to lookup.
 func (il *TIniList) GetSection(aSection string) *TSection {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -648,12 +636,11 @@ func (il *TIniList) HasSection(aSection string) bool {
 	return result
 } // HasSection()
 
-// HasSectionKey checks whether the INI data contain `aSection`
-// with `aKey` returning whether it exists at all.
+// HasSectionKey checks whether the INI data contain `aSection` with `aKey`
+// returning whether it exists at all.
 //
-//	`aSection` is the INI section to lookup.
-//
-//	`aKey` is the key name to lookup in `aSection`.
+//	`aSection` The INI section to lookup.
+//	`aKey` The key name to lookup in `aSection`.
 func (il *TIniList) HasSectionKey(aSection, aKey string) bool {
 	if 0 == len(aKey) {
 		return false
@@ -673,11 +660,11 @@ func (il *TIniList) Len() int {
 	return len(il.sections)
 } // Len()
 
-// Load reads the configured filename returning the data structure
-// read from the INI file and a possible error condition.
+// Load reads the configured filename returning the data structure read from
+// the INI file and a possible error condition.
 //
-// This method reads one line at a time of the INI file skipping both
-// empty lines and comments (identified by '#' or ';' at line start).
+// This method reads one line at a time of the INI file skipping both empty
+// lines and comments (identified by '#' or ';' at line start).
 func (il *TIniList) Load() (*TIniList, error) {
 	file, rErr := os.Open(il.fName)
 	if nil != rErr {
@@ -690,10 +677,10 @@ func (il *TIniList) Load() (*TIniList, error) {
 	return il, err
 } // Load()
 
-// Merge copies or merges all INI sections with all key/value pairs
-// into this list.
+// Merge copies or merges all INI sections with all key/value pairs into
+// this list.
 //
-//	`aINI` the INI list to merge with this one.
+//	`aINI` The INI list to merge with this one.
 func (il *TIniList) Merge(aINI *TIniList) *TIniList {
 	aINI.Walk(il.mergeWalker)
 
@@ -772,14 +759,14 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 
 // RemoveSection deletes `aSection` from the list of INI sections.
 //
-//	`aSection` is the name of the INI section to remove.
+//	`aSection` The name of the INI section to remove.
 func (il *TIniList) RemoveSection(aSection string) bool {
 	if 0 == len(aSection) {
 		aSection = il.defSect
 	}
 	_, exists := il.sections[aSection]
 	if !exists {
-		// section doesn't exist
+		// section doesn't exist which satisfies the removal wish
 		return true
 	}
 	delete(il.sections, aSection)
@@ -824,13 +811,11 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 
 // RemoveSectionKey removes aKey from aSection.
 //
-// This method returns 'true' if either `aSection` or `aKey`
-// doesn't exist or if `aKey` in `aSection` was successfully
-// removed, or `false` otherwise.
+// This method returns 'true' if either `aSection` or `aKey` doesn't exist
+// or if `aKey` in `aSection` was successfully removed, or `false` otherwise.
 //
 //	`aSection` is the name of the INI section to use.
-//
-//	`aKey` is the name of the key/value pair to remove.
+//	`aKey` The name of the key/value pair to remove.
 func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 	if 0 == len(aSection) {
 		aSection = il.defSect
@@ -844,17 +829,17 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 	return cs.RemoveKey(aKey)
 } // RemoveSectionKey()
 
-// SetFilename set the filename of the INI file to use.
+// SetFilename sets the filename of the INI file to use.
 //
-//	`aFilename` is the name to use for the INI file.
+//	`aFilename` The name to use for the INI file.
 func (il *TIniList) SetFilename(aFilename string) *TIniList {
 	il.fName = aFilename
 
 	return il
 } // SetFilename()
 
-// Store writes all INI data to the configured filename
-// returning the number of bytes written and a possible error.
+// Store writes all INI data to the configured filename returning the number
+// of bytes written and a possible error.
 func (il *TIniList) Store() (int, error) {
 	file, err := os.Create(il.fName)
 	if err != nil {
@@ -880,10 +865,14 @@ func (il *TIniList) String() (rString string) {
 	return
 } // String()
 
-// updateSectKey replaces the current value of `aKey` in `aSection`
-// by the provided new `aValue`.
+// `updateSectKey()` replaces the current value of `aKey` in `aSection` by
+// the provided new `aValue`.
 //
 // Private method used by the UpdateSectKeyXXX() methods.
+//
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The value of the key/value pair to update.
 func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 	if 0 == len(aKey) {
 		return false
@@ -895,21 +884,19 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 		return cs.UpdateKey(aKey, aValue)
 	}
 
-	// if aSection or aKey doesn't exist then create a new entry
+	// if `aSection` or `aKey` doesn't exist then create a new entry
 	return il.AddSectionKey(aSection, aKey, aValue)
 } // updateSectKey()
 
-// UpdateSectKeyBool replaces the current value of `aKey` in `aSection`
-// by the provided new `aValue` boolean.
+// UpdateSectKeyBool replaces the current value of `aKey` in `aSection` by
+// the provided new `aValue` boolean.
 //
 // If the given `aValue` is 'true' the string "true" is used
 // otherwise the string "false".
 //
-//	`aSection` is the name of the INI section to lookup.
-//
-//	`aKey` is the name of the key/value pair to use.
-//
-//	`aValue` is the boolean value of the key/value pair to update.
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The boolean value of the key/value pair to update.
 func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	if aValue {
 		return il.updateSectKey(aSection, aKey, "true")
@@ -918,38 +905,32 @@ func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	return il.updateSectKey(aSection, aKey, "false")
 } // UpdateSectKeyBool()
 
-// UpdateSectKeyFloat replaces the current value of aKey in `aSection`
-// by the provided new `aValue` float.
+// UpdateSectKeyFloat replaces the current value of aKey in `aSection` by the
+// provided new `aValue` float.
 //
-//	`aSection` is the name of the INI section to lookup.
-//
-//	`aKey` is the name of the key/value pair to use.
-//
-//	`aValue` is the float64 value of the key/value pair to update.
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The float64 value of the key/value pair to update.
 func (il *TIniList) UpdateSectKeyFloat(aSection, aKey string, aValue float64) bool {
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%f", aValue))
 } // UpdateSectKeyFloat()
 
-// UpdateSectKeyInt replaces the current value of `aKey` in `aSection`
-// by the provided new `aValue` integer.
+// UpdateSectKeyInt replaces the current value of `aKey` in `aSection` by the
+// provided new `aValue` integer.
 //
-//	`aSection` is the name of the INI section to lookup.
-//
-//	`aKey` is the name of the key/value pair to use.
-//
-//	`aValue` is the int64 value of the key/value pair to update.
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The int64 value of the key/value pair to update.
 func (il *TIniList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
 } // UpdateSectKeyInt()
 
-// UpdateSectKeyStr replaces the current value of `aKey` in `aSection`
-// by the provided new `aValue` string.
+// UpdateSectKeyStr replaces the current value of `aKey` in `aSection` by the
+// provided new `aValue` string.
 //
-//	`aSection` is the name of the INI section to lookup.
-//
-//	`aKey` is the name of the key/value pair to use.
-//
-//	`aValue` is the string value of the key/value pair to update.
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The string value of the key/value pair to update.
 func (il *TIniList) UpdateSectKeyStr(aSection, aKey, aValue string) bool {
 	return il.updateSectKey(aSection, aKey, strings.TrimSpace(aValue))
 } // UpdateSectKeyStr()
@@ -972,10 +953,10 @@ type (
 	}
 )
 
-// Walk traverses through all entries in the INI list sections
-// calling `aFunc` for each entry.
+// Walk traverses through all entries in the INI list sections calling
+// `aFunc` for each entry.
 //
-//	`aFunc` is the function called for each key/value pair in all sections.
+//	`aFunc` The function called for each key/value pair in all sections.
 func (il *TIniList) Walk(aFunc TWalkFunc) {
 	// we ignore the secOrder list because the
 	// order of sections doesn't matter here.
@@ -990,23 +971,23 @@ func (il *TIniList) Walk(aFunc TWalkFunc) {
 	}
 } // Walk()
 
-// Walker traverses through all entries in the INI list sections
-// calling `aWalker` for each entry.
+// Walker traverses through all entries in the INI list sections calling
+// `aWalker` for each entry.
 //
-//	`aWalker` is an object implementing the `TIniWalker` interface.
+//	`aWalker` An object implementing the `TIniWalker` interface.
 func (il *TIniList) Walker(aWalker TIniWalker) {
 	il.Walk(aWalker.Walk)
 } // Walker()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// New reads the given `aFilename` returning the data structure
-// read from that INI file and a possible error condition.
+// New reads the given `aFilename` returning the data structure read from
+// that INI file and a possible error condition.
 //
 // This function reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
 //
-//	`aFilename` is the name of the INI file to read.
+//	`aFilename` The name of the INI file to read.
 func New(aFilename string) (*TIniList, error) {
 	result := &TIniList{
 		defSect:  DefSection,
