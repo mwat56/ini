@@ -14,6 +14,8 @@
 	- [Usage](#usage)
 	- [Licence](#licence)
 
+----
+
 ## Purpose
 
 Over the times several different file formats have been developed just for storing configuration data for some program.
@@ -61,7 +63,7 @@ Please look at the [source code documentation](https://godoc.org/github.com/mwat
 
 ## Licence
 
-    Copyright © 2019 M.Watermann, 10247 Berlin, Germany
+    Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
                     All rights reserved
                 EMail : <support@mwat.de>
 
@@ -70,3 +72,5 @@ Please look at the [source code documentation](https://godoc.org/github.com/mwat
 > This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 >
 > You should have received a copy of the GNU General Public License along with this program. If not, see the [GNU General Public License](http://www.gnu.org/licenses/gpl.html) for details.
+
+----
