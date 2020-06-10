@@ -6,6 +6,8 @@
 
 package ini
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 import (
 	"fmt"
 	"testing"
@@ -85,23 +87,17 @@ func Test_removeQuotes(t *testing.T) {
 
 func TestTIniList_Clear(t *testing.T) {
 	cis, _ := New(inFileName)
-	type fields TIniList
-	cs := fields(*cis)
 	tests := []struct {
 		name   string
-		fields fields
-		want   bool
+		fields *TIniList
+		want   *TIniList
 	}{
 		// TODO: Add test cases.
-		{"1", cs, true},
+		{"1", cis, cis},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			id := &TIniList{
-				defSect:  tt.fields.defSect,
-				secOrder: tt.fields.secOrder,
-				sections: tt.fields.sections,
-			}
+			id := tt.fields
 			if got := id.Clear(); got != tt.want {
 				t.Errorf("TIniList.Clear() = '%v', want '%v'", got, tt.want)
 			}

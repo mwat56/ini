@@ -52,11 +52,12 @@ type (
 type TIniList tSections
 
 const (
+	// Default list capacity.
 	ilDefCapacity = 16
 
-	// DefSection is the name of the default section in the INI file
-	// which is used when there are key/value pairs in the file without
-	// a preceding section header like `[SectName]`.
+	// DefSection is the name of the default section in the INI
+	// file which is used when there are key/value pairs in the file
+	// without a preceding section header like `[SectName]`.
 	DefSection = "Default"
 )
 
@@ -590,7 +591,9 @@ func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 // stored in the INI file to setup the application. Emptying these data
 // structures should help the garbage collector do release the data not
 // needed anymore.
-func (il *TIniList) Clear() bool {
+//
+// The return value is the cleared list.
+func (il *TIniList) Clear() *TIniList {
 	// we leave defSect alone for now
 	il.secOrder = make(tOrder, 0, ilDefCapacity)
 	for name := range il.sections {
@@ -601,7 +604,7 @@ func (il *TIniList) Clear() bool {
 	}
 	il.sections = make(tIniSections)
 
-	return ((0 == len(il.sections)) && (0 == len(il.secOrder)))
+	return il
 } // Clear()
 
 // Filename returns the configured filename of the INI file.
