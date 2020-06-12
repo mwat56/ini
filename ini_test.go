@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	inFileName = "testin.ini"
+	inFileName  = `testIn.ini`
+	outFilename = `testOut.ini`
 )
 
 func Test_tKeyVal_String(t *testing.T) {
@@ -338,7 +339,9 @@ func TestTIniList_UpdateSectKeyBool(t *testing.T) {
 } // TestTIniList_UpdateSectKeyBool()
 
 func TestTIniList_WriteFile(t *testing.T) {
-	id, _ := New(inFileName)
+	ini, _ := New(inFileName)
+	ini.SetFilename(outFilename)
+
 	tests := []struct {
 		name       string
 		id         *TIniList
@@ -346,7 +349,7 @@ func TestTIniList_WriteFile(t *testing.T) {
 		wantErr    bool
 	}{
 		// TODO: Add test cases.
-		{"1", id, 4253, false},
+		{"1", ini, 4062, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
