@@ -12,6 +12,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -58,7 +59,7 @@ const (
 	// DefSection is the name of the default section in the INI
 	// file which is used when there are key/value pairs in the file
 	// without a preceding section header like `[SectName]`.
-	DefSection = "Default"
+	DefSection = `Default`
 )
 
 // Regular expressions to identify certain parts of an INI file.
@@ -97,10 +98,10 @@ func removeQuotes(aString string) (rString string) {
 // The returned string follows the pattern `Key = value`.
 func (kv *TKeyVal) String() string {
 	if 0 == len(kv.Value) {
-		return kv.Key + " ="
+		return kv.Key + ` =`
 	}
 
-	return kv.Key + " = " + kv.Value
+	return kv.Key + ` = ` + kv.Value
 } // String()
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -134,8 +135,8 @@ func (cs *TSection) AddKey(aKey, aValue string) bool {
 // If the given `aKey` doesn't exist then the second (bool) return value
 // will be `false`.
 //
-// "0", "f", "F", "n" and "N" are considered `false` while
-// "1", "t", "T", "y" and "Y" are considered `true`;
+// `0`, `f`, `F`, `n`, and `N` are considered `false` while
+// `1`, `t`, `T`, `y`, and `Y` are considered `true`;
 // these values will be given in the first result value.
 // All other values will give `false` as the second (`rOK`) result value.
 //
@@ -427,14 +428,14 @@ func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
 // If the given aKey in `aSection` doesn't exist then the second (bool) return
 // value will be `false`.
 //
-// "0", "f", "F", "n" and "N" are considered `false` while
-// "1", "t", "T", "y" and "Y" are considered 'true';
+// `0`, `f`, `F`, `n`, and `N` are considered `false` while
+// `1`, `t`, `T`, `y`, and `Y` are considered `true`;
 // these values will be given in the first result value.
 // All other values will give `false` as the second result value.
 //
 // This method actually checks only the first character of the key's value
 // so one can write e.g. "false" or "NO" (for a `false` result), or "True" or
-// "yes" (for a 'true' result).
+// "yes" (for a `true` result).
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
@@ -715,29 +716,26 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 				// Skip blank lines
 				continue
 			}
-			line = lastLine
-			lastLine = ""
+			line, lastLine = lastLine, ``
 		}
 		if ';' == line[0] || '#' == line[0] {
 			if 0 == len(lastLine) {
 				// Skip comment lines
 				continue
 			}
-			line = lastLine
-			lastLine = ""
+			line, lastLine = lastLine, ``
 		}
 		if '\\' == line[lLen-1] {
 			if (1 < lLen) && (' ' == line[lLen-2]) {
 				lastLine += line[:lLen-1]
 			} else {
-				lastLine += line[:lLen-1] + " "
+				lastLine += line[:lLen-1] + ` `
 			}
-			line = ""
+			line = ``
 			continue
 		}
 		if 0 < len(lastLine) {
-			line = lastLine + line
-			lastLine = ""
+			line, lastLine = lastLine+line, ``
 		}
 
 		if matches := ilSectionRE.FindStringSubmatch(line); nil != matches {
@@ -752,7 +750,7 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 			il.AddSectionKey(section, key, val)
 		} else {
 			// ignore broken lines
-			line = ""
+			line = ``
 		}
 	}
 	rErr = aScanner.Err()
@@ -894,7 +892,7 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 // UpdateSectKeyBool replaces the current value of `aKey` in `aSection` by
 // the provided new `aValue` boolean.
 //
-// If the given `aValue` is 'true' the string "true" is used
+// If the given `aValue` is `true` then the string "true" is used
 // otherwise the string "false".
 //
 //	`aSection` The name of the INI section to lookup.
@@ -902,10 +900,10 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 //	`aValue` The boolean value of the key/value pair to update.
 func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	if aValue {
-		return il.updateSectKey(aSection, aKey, "true")
+		return il.updateSectKey(aSection, aKey, `true`)
 	}
 
-	return il.updateSectKey(aSection, aKey, "false")
+	return il.updateSectKey(aSection, aKey, `false`)
 } // UpdateSectKeyBool()
 
 // UpdateSectKeyFloat replaces the current value of aKey in `aSection` by the
@@ -1000,5 +998,71 @@ func New(aFilename string) (*TIniList, error) {
 	}
 	return result.Load()
 } // New()
+
+// ReadIniData returns the config values read from INI file(s).
+//
+//	The steps here are:
+//	(1) read the local `./.nele.ini`,
+//	(2) read the global `/etc/nele.ini`,
+//	(3) read the user-local `~/.nele.ini`,
+//	(4) read the user-local `~/.config/nele.ini`,
+//	(5) read the `-ini` commandline argument.
+//
+//	`aName` The application's name use in the INI file name.
+func ReadIniData(aName string) *TSection {
+	// (1) ./
+	fName, _ := filepath.Abs(`./` + aName + `.ini`)
+	ini1, err := New(fName)
+	if nil == err {
+		ini1.AddSectionKey(``, `iniFile`, fName)
+	}
+
+	// (2) /etc/
+	fName = `/etc/` + aName + `.ini`
+	if ini2, err2 := New(fName); nil == err2 {
+		ini1.Merge(ini2)
+		ini1.AddSectionKey(``, `iniFile`, fName)
+	}
+
+	// (3) ~user/
+	fName, err = os.UserHomeDir()
+	if (nil == err) && (0 < len(fName)) {
+		fName, _ = filepath.Abs(filepath.Join(fName, `.`+aName+`.ini`))
+		if ini2, err2 := New(fName); nil == err2 {
+			ini1.Merge(ini2)
+			ini1.AddSectionKey(``, `iniFile`, fName)
+		}
+	}
+
+	// (4) ~/.config/
+	if confDir, err2 := os.UserConfigDir(); nil == err2 {
+		fName, _ = filepath.Abs(filepath.Join(confDir, aName+`.ini`))
+		if ini2, err2 := New(fName); nil == err2 {
+			ini1.Merge(ini2)
+			ini1.AddSectionKey(``, `iniFile`, fName)
+		}
+	}
+
+	// (5) cmdline
+	aLen := len(os.Args)
+	for i := 1; i < aLen; i++ {
+		if `-ini` == os.Args[i] {
+			//XXX Note that this works only if `-ini` and
+			// filename are two separate arguments. It will
+			// fail if it's given in the form `-ini=filename`.
+			i++
+			if i < aLen {
+				fName, _ = filepath.Abs(os.Args[i])
+				if ini2, err2 := New(fName); nil == err2 {
+					ini1.Merge(ini2)
+					ini1.AddSectionKey(``, `iniFile`, fName)
+				}
+			}
+			break
+		}
+	}
+
+	return ini1.GetSection(``)
+} // ReadIniData()
 
 /* _EoF_ */
