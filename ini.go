@@ -28,19 +28,19 @@ type (
 	// TSection is a slice of key/value pairs.
 	TSection []TKeyVal
 
-	// `tIniSections` is a list (map) of INI sections.
-	tIniSections map[string]*TSection
+	// `tSectionList` is a list (map) of INI sections.
+	tSectionList map[string]*TSection
 
 	// A helper slice of strings (i.e. section names)
 	// used to preserve the order of INI sections.
-	tOrder = []string
+	tSectionOrder = []string
 
 	// This opaque data structure is filled by e.g. `LoadFile(…)`.
-	tSections struct {
-		defSect  string       // name of default section
-		fName    string       // name of the INI file to use
-		secOrder tOrder       // slice containing the order of sections
-		sections tIniSections // list of INI sections
+	tIniSectionsList struct {
+		defSect  string        // name of default section
+		fName    string        // name of the INI file to use
+		secOrder tSectionOrder // slice containing the order of sections
+		sections tSectionList  // list of INI sections
 	}
 )
 
@@ -50,7 +50,7 @@ type (
 //
 // For accessing the sections and key/value pairs it provides
 // the appropriate methods.
-type TIniList tSections
+type TIniList tIniSectionsList
 
 const (
 	// Default list capacity.
@@ -189,7 +189,7 @@ func (cs *TSection) AsFloat32(aKey string) (rVal float32, rOK bool) {
 // `AsFloat64` returns the nearest floating point number rounded using
 // IEEE754 unbiased rounding.
 //
-// 	aKey` the name of the key to lookup.
+//	aKey` the name of the key to lookup.
 func (cs *TSection) AsFloat64(aKey string) (rVal float64, rOK bool) {
 	if val, exists := cs.AsString(aKey); exists {
 		if f64, err := strconv.ParseFloat(val, 64); nil == err {
@@ -590,20 +590,20 @@ func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 //
 // This method can be called once the program has used the config values
 // stored in the INI file to setup the application. Emptying these data
-// structures should help the garbage collector do release the data not
+// structures should help the garbage collector to release the data not
 // needed anymore.
 //
 // The return value is the cleared list.
 func (il *TIniList) Clear() *TIniList {
 	// we leave defSect alone for now
-	il.secOrder = make(tOrder, 0, ilDefCapacity)
+	il.secOrder = make(tSectionOrder, 0, ilDefCapacity)
 	for name := range il.sections {
 		if cs, exists := il.sections[name]; exists {
 			cs.Clear()
 		}
 		delete(il.sections, name)
 	}
-	il.sections = make(tIniSections)
+	il.sections = make(tSectionList)
 
 	return il
 } // Clear()
@@ -631,13 +631,13 @@ func (il *TIniList) GetSection(aSection string) *TSection {
 // HasSection checks whether the INI data contain `aSection`.
 //
 //	`aSection` is the name of the INI section to lookup.
-func (il *TIniList) HasSection(aSection string) bool {
+func (il *TIniList) HasSection(aSection string) (rOK bool) {
 	if 0 == len(aSection) {
-		aSection = il.defSect
+		_, rOK = il.sections[il.defSect]
+	} else {
+		_, rOK = il.sections[aSection]
 	}
-	_, result := il.sections[aSection]
-
-	return result
+	return
 } // HasSection()
 
 // HasSectionKey checks whether the INI data contain `aSection` with `aKey`
@@ -664,11 +664,11 @@ func (il *TIniList) Len() int {
 	return len(il.sections)
 } // Len()
 
-// Load reads the configured filename returning the data structure read from
-// the INI file and a possible error condition.
+// Load reads the configured filename returning the data structure
+// read from the INI file and a possible error condition.
 //
-// This method reads one line at a time of the INI file skipping both empty
-// lines and comments (identified by '#' or ';' at line start).
+// This method reads one line at a time of the INI file skipping both
+// empty lines and comments (identified by '#' or ';' at line start).
 func (il *TIniList) Load() (*TIniList, error) {
 	file, rErr := os.Open(il.fName)
 	if nil != rErr {
@@ -678,11 +678,12 @@ func (il *TIniList) Load() (*TIniList, error) {
 
 	scanner := bufio.NewScanner(file)
 	_, err := il.read(scanner)
+
 	return il, err
 } // Load()
 
-// Merge copies or merges all INI sections with all key/value pairs into
-// this list.
+// Merge copies or merges all INI sections with all key/value pairs
+// into this list.
 //
 //	`aINI` The INI list to merge with this one.
 func (il *TIniList) Merge(aINI *TIniList) *TIniList {
@@ -710,29 +711,27 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 		rRead += len(line) + 1 // add trailing LF
 
 		line = strings.TrimSpace(line)
-		lLen := len(line)
-		if 0 == lLen {
+		lineLen := len(line)
+		if 0 == lineLen {
 			if 0 == len(lastLine) {
-				// Skip blank lines
-				continue
+				continue // Skip blank lines
 			}
 			line, lastLine = lastLine, ``
 		}
 		if ';' == line[0] || '#' == line[0] {
 			if 0 == len(lastLine) {
-				// Skip comment lines
-				continue
+				continue // Skip comment lines
 			}
 			line, lastLine = lastLine, ``
 		}
-		if '\\' == line[lLen-1] {
-			if (1 < lLen) && (' ' == line[lLen-2]) {
-				lastLine += line[:lLen-1]
+		if '\\' == line[lineLen-1] {
+			if (1 < lineLen) && (' ' == line[lineLen-2]) {
+				lastLine += line[:lineLen-1]
 			} else {
-				lastLine += line[:lLen-1] + ` `
+				lastLine += line[:lineLen-1] + ` `
 			}
 			line = ``
-			continue
+			continue // concatenation handled
 		}
 		if 0 < len(lastLine) {
 			line, lastLine = lastLine+line, ``
@@ -749,8 +748,7 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 
 			il.AddSectionKey(section, key, val)
 		} else {
-			// ignore broken lines
-			line = ``
+			line = `` // ignore broken lines
 		}
 	}
 	rErr = aScanner.Err()
@@ -770,6 +768,7 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		// section doesn't exist which satisfies the removal wish
 		return true
 	}
+
 	delete(il.sections, aSection)
 	if 0 < len(il.sections) {
 		if _, exists = il.sections[aSection]; exists {
@@ -778,8 +777,8 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 	}
 
 	// len - 1: because list is zero-based
-	olen := len(il.secOrder) - 1
-	if 0 > olen {
+	oLen := len(il.secOrder) - 1
+	if 0 > oLen {
 		// empty list
 		return true
 	}
@@ -791,19 +790,22 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		}
 		switch idx {
 		case 0:
-			if 0 == olen {
+			if 0 == oLen {
 				// the only list entry: replace by an empty list
-				il.secOrder = make(tOrder, 0, ilDefCapacity)
+				il.secOrder = make(tSectionOrder, 0, ilDefCapacity)
 			} else {
 				// first list entry: move the remaining data
 				il.secOrder = il.secOrder[1:]
 			}
-		case olen:
+
+		case oLen:
 			// last list entry
 			il.secOrder = il.secOrder[:idx]
+
 		default:
 			il.secOrder = append(il.secOrder[:idx], il.secOrder[idx+1:]...)
 		}
+
 		return true
 	}
 
@@ -834,13 +836,13 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 //
 //	`aFilename` The name to use for the INI file.
 func (il *TIniList) SetFilename(aFilename string) *TIniList {
-	il.fName = aFilename
+	il.fName = strings.TrimSpace(aFilename)
 
 	return il
 } // SetFilename()
 
-// Store writes all INI data to the configured filename returning the number
-// of bytes written and a possible error.
+// Store writes all INI data to the configured filename returning
+// the number of bytes written and a possible error.
 func (il *TIniList) Store() (int, error) {
 	file, err := os.Create(il.fName)
 	if err != nil {
@@ -866,8 +868,8 @@ func (il *TIniList) String() (rString string) {
 	return
 } // String()
 
-// `updateSectKey()` replaces the current value of `aKey` in `aSection` by
-// the provided new `aValue`.
+// `updateSectKey()` replaces the current value of `aKey` in `aSection`
+// by the provided new `aValue`.
 //
 // Private method used by the UpdateSectKeyXXX() methods.
 //
@@ -878,6 +880,7 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 	if 0 == len(aKey) {
 		return false
 	}
+
 	if 0 == len(aSection) {
 		aSection = il.defSect
 	}
@@ -889,8 +892,8 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 	return il.AddSectionKey(aSection, aKey, aValue)
 } // updateSectKey()
 
-// UpdateSectKeyBool replaces the current value of `aKey` in `aSection` by
-// the provided new `aValue` boolean.
+// UpdateSectKeyBool replaces the current value of `aKey` in `aSection`
+// by the provided new `aValue` boolean.
 //
 // If the given `aValue` is `true` then the string "true" is used
 // otherwise the string "false".
@@ -906,8 +909,8 @@ func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	return il.updateSectKey(aSection, aKey, `false`)
 } // UpdateSectKeyBool()
 
-// UpdateSectKeyFloat replaces the current value of aKey in `aSection` by the
-// provided new `aValue` float.
+// UpdateSectKeyFloat replaces the current value of aKey in `aSection`
+// by the provided new `aValue` float.
 //
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
@@ -916,8 +919,8 @@ func (il *TIniList) UpdateSectKeyFloat(aSection, aKey string, aValue float64) bo
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%f", aValue))
 } // UpdateSectKeyFloat()
 
-// UpdateSectKeyInt replaces the current value of `aKey` in `aSection` by the
-// provided new `aValue` integer.
+// UpdateSectKeyInt replaces the current value of `aKey` in `aSection`
+// by the provided new `aValue` integer.
 //
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
@@ -926,8 +929,8 @@ func (il *TIniList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
 } // UpdateSectKeyInt()
 
-// UpdateSectKeyStr replaces the current value of `aKey` in `aSection` by the
-// provided new `aValue` string.
+// UpdateSectKeyStr replaces the current value of `aKey` in `aSection`
+// by the provided new `aValue` string.
 //
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
@@ -959,7 +962,7 @@ type (
 //
 //	`aFunc` The function called for each key/value pair in all sections.
 func (il *TIniList) Walk(aFunc TWalkFunc) {
-	// we ignore the secOrder list because the
+	// We ignore the `secOrder` list because the
 	// order of sections doesn't matter here.
 	for section := range il.sections {
 		if 0 == len(section) {
@@ -982,8 +985,8 @@ func (il *TIniList) Walker(aWalker TIniWalker) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// New reads the given `aFilename` returning the data structure read from
-// that INI file and a possible error condition.
+// New reads the given `aFilename` returning the data structure read
+// from that INI file and a possible error condition.
 //
 // This function reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
@@ -993,8 +996,8 @@ func New(aFilename string) (*TIniList, error) {
 	result := &TIniList{
 		defSect:  DefSection,
 		fName:    aFilename,
-		secOrder: make(tOrder, 0, ilDefCapacity),
-		sections: make(tIniSections),
+		secOrder: make(tSectionOrder, 0, ilDefCapacity),
+		sections: make(tSectionList),
 	}
 	return result.Load()
 } // New()
@@ -1002,44 +1005,50 @@ func New(aFilename string) (*TIniList, error) {
 // ReadIniData returns the config values read from INI file(s).
 //
 //	The steps here are:
-//	(1) read the local `./.nele.ini`,
-//	(2) read the global `/etc/nele.ini`,
-//	(3) read the user-local `~/.nele.ini`,
-//	(4) read the user-local `~/.config/nele.ini`,
+//	(1) read the local `./.aName.ini`,
+//	(2) read the global `/etc/aName.ini`,
+//	(3) read the user-local `~/.aName.ini`,
+//	(4) read the user-local `~/.config/aName.ini`,
 //	(5) read the `-ini` commandline argument.
+//
+// This function considers only the `Default` section of the INI files.
 //
 //	`aName` The application's name use in the INI file name.
 func ReadIniData(aName string) *TSection {
+	var (
+		confDir    string
+		err        error
+		ini1, ini2 *TIniList
+	)
 	// (1) ./
 	fName, _ := filepath.Abs(`./` + aName + `.ini`)
-	ini1, err := New(fName)
-	if nil == err {
-		ini1.AddSectionKey(``, `iniFile`, fName)
+	if ini1, err = New(fName); nil == err {
+		ini1.AddSectionKey(ini1.defSect, `iniFile`, fName)
 	}
 
 	// (2) /etc/
 	fName = `/etc/` + aName + `.ini`
-	if ini2, err2 := New(fName); nil == err2 {
+	if ini2, err = New(fName); nil == err {
 		ini1.Merge(ini2)
-		ini1.AddSectionKey(``, `iniFile`, fName)
+		ini1.AddSectionKey(ini1.defSect, `iniFile`, fName)
 	}
 
 	// (3) ~user/
 	fName, err = os.UserHomeDir()
 	if (nil == err) && (0 < len(fName)) {
 		fName, _ = filepath.Abs(filepath.Join(fName, `.`+aName+`.ini`))
-		if ini2, err2 := New(fName); nil == err2 {
+		if ini2, err = New(fName); nil == err {
 			ini1.Merge(ini2)
-			ini1.AddSectionKey(``, `iniFile`, fName)
+			ini1.AddSectionKey(ini1.defSect, `iniFile`, fName)
 		}
 	}
 
 	// (4) ~/.config/
-	if confDir, err2 := os.UserConfigDir(); nil == err2 {
+	if confDir, err = os.UserConfigDir(); nil == err {
 		fName, _ = filepath.Abs(filepath.Join(confDir, aName+`.ini`))
-		if ini2, err2 := New(fName); nil == err2 {
+		if ini2, err = New(fName); nil == err {
 			ini1.Merge(ini2)
-			ini1.AddSectionKey(``, `iniFile`, fName)
+			ini1.AddSectionKey(ini1.defSect, `iniFile`, fName)
 		}
 	}
 
@@ -1053,16 +1062,16 @@ func ReadIniData(aName string) *TSection {
 			i++
 			if i < aLen {
 				fName, _ = filepath.Abs(os.Args[i])
-				if ini2, err2 := New(fName); nil == err2 {
+				if ini2, err = New(fName); nil == err {
 					ini1.Merge(ini2)
-					ini1.AddSectionKey(``, `iniFile`, fName)
+					ini1.AddSectionKey(ini1.defSect, `iniFile`, fName)
 				}
 			}
 			break
 		}
 	}
 
-	return ini1.GetSection(``)
+	return ini1.GetSection(ini1.defSect)
 } // ReadIniData()
 
 /* _EoF_ */

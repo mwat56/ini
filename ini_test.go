@@ -177,12 +177,12 @@ func TestTIniList_RemoveSectionKey(t *testing.T) {
 func TestTIniList_String(t *testing.T) {
 	id1 := TIniList{
 		defSect: "Default",
-		secOrder: tOrder{
+		secOrder: tSectionOrder{
 			"Default",
 			"Sect2",
 			"NOOP",
 		},
-		sections: tIniSections{
+		sections: tSectionList{
 			"Sect2": &TSection{
 				TKeyVal{"key3", "val3"},
 				TKeyVal{"key4", ""},
@@ -219,12 +219,12 @@ func TestTIniList_String(t *testing.T) {
 func Benchmark_TSections_String(b *testing.B) {
 	id1 := TIniList{
 		defSect: "Default",
-		secOrder: tOrder{
+		secOrder: tSectionOrder{
 			"Default",
 			"Sect2",
 			"NOOP",
 		},
-		sections: tIniSections{
+		sections: tSectionList{
 			"Sect2": &TSection{
 				TKeyVal{"key3", "val3"},
 				TKeyVal{"key4", ""},
