@@ -1,3 +1,3 @@
 module github.com/mwat56/ini
 
-go 1.14
+go 1.17

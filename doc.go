@@ -3,7 +3,7 @@ Package ini implements an INI file reader/writer with methods to read/write
 INI files from/to disc and methods to access the section's key/value pairs.
 
 
-    Copyright © 2019, 2020 M.Watermann, 10247 Berlin, Germany
+    Copyright © 2019, 2021 M.Watermann, 10247 Berlin, Germany
                     All rights reserved
                 EMail : <support@mwat.de>
 
