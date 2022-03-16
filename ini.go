@@ -1,9 +1,8 @@
 /*
-   Copyright © 2019, 2021 M.Watermann, 10247 Berlin, Germany
+   Copyright © 2019, 2022 M.Watermann, 10247 Berlin, Germany
                   All rights reserved
               EMail : <support@mwat.de>
 */
-
 package ini
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
@@ -53,13 +52,13 @@ type (
 type TIniList tIniSectionsList
 
 const (
+	// DefSection is the name of the default section in the INI file
+	// which is used when there are key/value pairs in the file
+	// without a preceding section header like `[SectionName]`.
+	DefSection = `Default`
+
 	// Default list capacity.
 	ilDefCapacity = 16
-
-	// DefSection is the name of the default section in the INI
-	// file which is used when there are key/value pairs in the file
-	// without a preceding section header like `[SectName]`.
-	DefSection = `Default`
 )
 
 // Regular expressions to identify certain parts of an INI file.
@@ -595,7 +594,7 @@ func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 //
 // The return value is the cleared list.
 func (il *TIniList) Clear() *TIniList {
-	// we leave defSect alone for now
+	// we leave `defSect` alone for now
 	il.secOrder = make(tSectionOrder, 0, ilDefCapacity)
 	for name := range il.sections {
 		if cs, exists := il.sections[name]; exists {
