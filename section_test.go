@@ -515,6 +515,32 @@ func Benchmark_TSection_String(b *testing.B) {
 	}
 } // Benchmark_TSection_String()
 
+// func Benchmark_TSections_String2(b *testing.B) {
+// 	id1 := TIniList{
+// 		defSect: "Default",
+// 		secOrder: tSectionOrder{
+// 			"Default",
+// 			"Sect2",
+// 			"NOOP",
+// 		},
+// 		sections: tSectionList{
+// 			"Sect2": &TSection{
+// 				TKeyVal{"key3", "val3"},
+// 				TKeyVal{"key4", ""},
+// 			},
+// 			"Default": &TSection{
+// 				TKeyVal{"key1", "val1"},
+// 				TKeyVal{"key2", "val2"},
+// 			},
+// 		},
+// 	}
+// 	for n := 0; n < b.N; n++ {
+// 		if 0 == len(id1.String()) {
+// 			continue
+// 		}
+// 	}
+// } // Benchmark_TSections_String()
+
 func TestTSection_UpdateKey1(t *testing.T) {
 	type args struct {
 		aKey   string
@@ -564,3 +590,5 @@ func TestTSection_UpdateKey(t *testing.T) {
 		})
 	}
 } // TestTSection_UpdateKey()
+
+/* _EoF_ */
