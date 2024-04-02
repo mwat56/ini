@@ -1,6 +1,7 @@
 *~
+*.bak
 .git/
-.github
+.github/
 *.ini
 TODO*
 .vscode/
