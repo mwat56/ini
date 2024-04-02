@@ -1,5 +1,5 @@
 /*
-Copyright © 2019, 2023 M.Watermann, 10247 Berlin, Germany
+Copyright © 2019, 204  M.Watermann, 10247 Berlin, Germany
 
 	   All rights reserved
 	EMail : <support@mwat.de>
