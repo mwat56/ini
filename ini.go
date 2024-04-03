@@ -26,7 +26,7 @@ type (
 	}
 )
 
-// Walk traverses through all entries in the INI list sections calling
+// `Walk` traverses through all entries in the INI list sections calling
 // `aFunc` for each entry.
 //
 //	`aFunc` The function called for each key/value pair in all sections.
@@ -44,8 +44,8 @@ func (il *TIniList) Walk(aFunc TWalkFunc) {
 	}
 } // Walk()
 
-// Walker traverses through all entries in the INI list sections calling
-// `aWalker` for each entry.
+// `Walker` traverses through all entries in the INI list sections
+// calling `aWalker` for each entry.
 //
 //	`aWalker` An object implementing the `TIniWalker` interface.
 func (il *TIniList) Walker(aWalker TIniWalker) {
@@ -54,7 +54,7 @@ func (il *TIniList) Walker(aWalker TIniWalker) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// New reads the given `aFilename` returning the data structure read
+// `New` reads the given `aFilename` returning the data structure read
 // from that INI file and a possible error condition.
 //
 // This function reads one line at a time of the INI file skipping both

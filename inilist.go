@@ -82,7 +82,7 @@ func removeQuotes(aString string) (rString string) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// addSection appends a new INI section returning `true` on success or
+// `addSection` appends a new INI section returning `true` on success or
 // `false` otherwise.
 //
 //	`aSection` The name of the INI section to add.
@@ -104,8 +104,8 @@ func (il *TIniList) addSection(aSection string) bool {
 	return false
 } // addSection()
 
-// AddSectionKey appends a new key/value pair to `aSection` returning `true`
-// on success or `false` otherwise.
+// `AddSectionKey` appends a new key/value pair to `aSection`
+// returning `true` on success or `false` otherwise.
 //
 //	`aSection` The name of the INI section to use.
 //	`aKey` The key of the key/value pair to add.
@@ -129,10 +129,10 @@ func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
  * Public methods to return INI values from a section as a certain data type.
  */
 
-// AsBool returns the value of `aKey` in `aSection` as a boolean value.
+// `AsBool` returns the value of `aKey` in `aSection` as a boolean value.
 //
-// If the given aKey in `aSection` doesn't exist then the second (bool) return
-// value will be `false`.
+// If the given aKey in `aSection` doesn't exist then the second (bool)
+// return value will be `false`.
 //
 // `0`, `f`, `F`, `n`, and `N` are considered `false` while
 // `1`, `t`, `T`, `y`, and `Y` are considered `true`;
@@ -156,7 +156,7 @@ func (il *TIniList) AsBool(aSection, aKey string) (rVal, rOK bool) {
 	return
 } // AsBool()
 
-// AsFloat32 returns the value of `aKey` in `aSection` as a 32bit floating
+// `AsFloat32` returns the value of `aKey` in `aSection` as a 32bit floating
 // point.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (bool)
@@ -179,8 +179,8 @@ func (il *TIniList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
 	return
 } // AsFloat32()
 
-// AsFloat64 returns the value of `aKey` in `aSection` as a 64bit floating
-// point.
+// `AsFloat64` returns the value of `aKey` in `aSection` as a 64bit
+// floating point.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
 // return value will be `false`.
@@ -202,10 +202,10 @@ func (il *TIniList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
 	return
 } // AsFloat64()
 
-// AsInt returns the value of `aKey` in `aSection` as an integer.
+// `AsInt` returns the value of `aKey` in `aSection` as an integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second
+// (`rOK`) return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
@@ -220,10 +220,10 @@ func (il *TIniList) AsInt(aSection, aKey string) (rVal int, rOK bool) {
 	return
 } // AsInt()
 
-// AsInt16 return the value of `aKey` in `aSection` as a 16bit integer.
+// `AsInt16` return the value of `aKey` in `aSection` as a 16bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second
+// (`rOK`) return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
@@ -238,7 +238,7 @@ func (il *TIniList) AsInt16(aSection, aKey string) (rVal int16, rOK bool) {
 	return
 } // AsInt16()
 
-// AsInt32 return the value of `aKey` in `aSection` as a 32bit integer.
+// `AsInt32` return the value of `aKey` in `aSection` as a 32bit integer.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
 // return value will be `false`.
@@ -256,7 +256,7 @@ func (il *TIniList) AsInt32(aSection, aKey string) (rVal int32, rOK bool) {
 	return
 } // AsInt32()
 
-// AsInt64 return the value of `aKey` in `aSection` as a 64bit integer.
+// `AsInt64` return the value of `aKey` in `aSection` as a 64bit integer.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
 // return value will be `false`.
@@ -274,7 +274,7 @@ func (il *TIniList) AsInt64(aSection, aKey string) (rVal int64, rOK bool) {
 	return
 } // AsInt64()
 
-// AsString returns the value of `aKey` in `aSection` as a string.
+// `AsString` returns the value of `aKey` in `aSection` as a string.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
 // return value will be `false`.
@@ -292,7 +292,7 @@ func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 	return
 } // AsString()
 
-// Clear empties the internal data structures.
+// `Clear` empties the internal data structures.
 //
 // This method can be called once the program has used the config values
 // stored in the INI file to setup the application. Emptying these data
@@ -314,12 +314,12 @@ func (il *TIniList) Clear() *TIniList {
 	return il
 } // Clear()
 
-// Filename returns the configured filename of the INI file.
+// `Filename` returns the configured filename of the INI file.
 func (il *TIniList) Filename() string {
 	return il.fName
 } // Filename()
 
-// GetSection returns the INI section named `aSection`, or an empty list
+// `GetSection` returns the INI section named `aSection`, or an empty list
 // if not found.
 //
 //	`aSection` The name of the INI section to lookup.
@@ -334,7 +334,7 @@ func (il *TIniList) GetSection(aSection string) *TSection {
 	return &TSection{}
 } // GetSection()
 
-// HasSection checks whether the INI data contain `aSection`.
+// `HasSection` checks whether the INI data contain `aSection`.
 //
 //	`aSection` is the name of the INI section to lookup.
 func (il *TIniList) HasSection(aSection string) (rOK bool) {
@@ -346,8 +346,8 @@ func (il *TIniList) HasSection(aSection string) (rOK bool) {
 	return
 } // HasSection()
 
-// HasSectionKey checks whether the INI data contain `aSection` with `aKey`
-// returning whether it exists at all.
+// `HasSectionKey` checks whether the INI data contain `aSection` with
+// `aKey` returning whether it exists at all.
 //
 //	`aSection` The INI section to lookup.
 //	`aKey` The key name to lookup in `aSection`.
@@ -365,12 +365,12 @@ func (il *TIniList) HasSectionKey(aSection, aKey string) bool {
 	return false
 } // HasSectionKey()
 
-// Len returns the number of INI sections.
+// `Len` returns the number of INI sections.
 func (il *TIniList) Len() int {
 	return len(il.sections)
 } // Len()
 
-// Load reads the configured filename returning the data structure
+// `Load` reads the configured filename returning the data structure
 // read from the INI file and a possible error condition.
 //
 // This method reads one line at a time of the INI file skipping both
@@ -388,7 +388,7 @@ func (il *TIniList) Load() (*TIniList, error) {
 	return il, err
 } // Load()
 
-// Merge copies or merges all INI sections with all key/value pairs
+// `Merge` copies or merges all INI sections with all key/value pairs
 // into this list.
 //
 //	`aINI` The INI list to merge with this one.
@@ -398,12 +398,12 @@ func (il *TIniList) Merge(aINI *TIniList) *TIniList {
 	return il
 } // Merge()
 
-// `mergeWalker()` inserts the given key/value pair in `aSection`.
+// `mergeWalker` inserts the given key/value pair in `aSection`.
 func (il *TIniList) mergeWalker(aSection, aKey, aValue string) {
 	il.AddSectionKey(aSection, aKey, aValue)
 } // mergeWalker()
 
-// `read()` parses the INI file returning the number of bytes read
+// `read` parses the INI file returning the number of bytes read
 // and a possible error.
 //
 // This method reads one line of the INI file at a time skipping both
@@ -462,7 +462,7 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 	return
 } // read()
 
-// RemoveSection deletes `aSection` from the list of INI sections.
+// `RemoveSection` deletes `aSection` from the list of INI sections.
 //
 //	`aSection` The name of the INI section to remove.
 func (il *TIniList) RemoveSection(aSection string) bool {
@@ -518,7 +518,7 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 	return false
 } // RemoveSection()
 
-// RemoveSectionKey removes aKey from aSection.
+// `RemoveSectionKey` removes aKey from aSection.
 //
 // This method returns 'true' if either `aSection` or `aKey` doesn't exist
 // or if `aKey` in `aSection` was successfully removed, or `false` otherwise.
@@ -538,7 +538,7 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 	return cs.RemoveKey(aKey)
 } // RemoveSectionKey()
 
-// SetFilename sets the filename of the INI file to use.
+// `SetFilename` sets the filename of the INI file to use.
 //
 //	`aFilename` The name to use for the INI file.
 func (il *TIniList) SetFilename(aFilename string) *TIniList {
@@ -547,7 +547,7 @@ func (il *TIniList) SetFilename(aFilename string) *TIniList {
 	return il
 } // SetFilename()
 
-// Store writes all INI data to the configured filename returning
+// `Store` writes all INI data to the configured filename returning
 // the number of bytes written and a possible error.
 func (il *TIniList) Store() (int, error) {
 	file, err := os.Create(il.fName)
@@ -574,7 +574,7 @@ func (il *TIniList) String() (rString string) {
 	return
 } // String()
 
-// `updateSectKey()` replaces the current value of `aKey` in `aSection`
+// `updateSectKey` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue`.
 //
 // Private method used by the UpdateSectKeyXXX() methods.
@@ -598,7 +598,7 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 	return il.AddSectionKey(aSection, aKey, aValue)
 } // updateSectKey()
 
-// UpdateSectKeyBool replaces the current value of `aKey` in `aSection`
+// `UpdateSectKeyBool` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` boolean.
 //
 // If the given `aValue` is `true` then the string "true" is used
@@ -615,7 +615,7 @@ func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	return il.updateSectKey(aSection, aKey, `false`)
 } // UpdateSectKeyBool()
 
-// UpdateSectKeyFloat replaces the current value of aKey in `aSection`
+// `UpdateSectKeyFloat` replaces the current value of aKey in `aSection`
 // by the provided new `aValue` float.
 //
 //	`aSection` The name of the INI section to lookup.
@@ -625,7 +625,7 @@ func (il *TIniList) UpdateSectKeyFloat(aSection, aKey string, aValue float64) bo
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%f", aValue))
 } // UpdateSectKeyFloat()
 
-// UpdateSectKeyInt replaces the current value of `aKey` in `aSection`
+// `UpdateSectKeyInt` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` integer.
 //
 //	`aSection` The name of the INI section to lookup.
@@ -635,7 +635,7 @@ func (il *TIniList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
 	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
 } // UpdateSectKeyInt()
 
-// UpdateSectKeyStr replaces the current value of `aKey` in `aSection`
+// `UpdateSectKeyStr` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` string.
 //
 //	`aSection` The name of the INI section to lookup.

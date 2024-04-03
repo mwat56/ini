@@ -293,7 +293,7 @@ func (ks *TSection) UpdateKey(aKey, aValue string) (rOK bool) {
 	return ks.AddKey(aKey, aValue)
 } // UpdateKey()
 
-// ReadIniData returns the config values read from INI file(s).
+// `ReadIniData` returns the config values read from INI file(s).
 //
 //	The steps here are:
 //	(1) read the local `./.aName.ini`,
