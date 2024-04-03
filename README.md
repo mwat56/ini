@@ -63,7 +63,7 @@ Please look at the [source code documentation](https://godoc.org/github.com/mwat
 
 ## Licence
 
-    Copyright © 2019, 204 M.Watermann, 10247 Berlin, Germany
+    Copyright © 2019, 2024 M.Watermann, 10247 Berlin, Germany
                     All rights reserved
                 EMail : <support@mwat.de>
 
