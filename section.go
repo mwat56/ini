@@ -30,20 +30,19 @@ type (
 //	`aKey` The key of the key/value pair to add.
 //	`aValue` The value of the key/value pair to add.
 func (ks *TSection) AddKey(aKey, aValue string) bool {
-	if 0 < len(aKey) {
-		idx := ks.IndexOf(aKey)
-		if 0 > idx {
-			*ks = append(*ks, TKeyVal{aKey, aValue})
-		} else {
-			// key already exists: update
-			(*ks)[idx].Value = aValue
-		}
-
-		if val, ok := ks.AsString(aKey); ok {
-			return (val == aValue)
-		}
-	} else {
+	if 0 == len(aKey) {
 		return ks.RemoveKey(aKey)
+	}
+	idx := ks.IndexOf(aKey)
+	if 0 > idx {
+		*ks = append(*ks, TKeyVal{aKey, aValue})
+	} else {
+		// key already exists: update
+		(*ks)[idx].Value = aValue
+	}
+
+	if val, ok := ks.AsString(aKey); ok {
+		return (val == aValue)
 	}
 
 	return false
