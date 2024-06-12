@@ -28,7 +28,7 @@ type (
 // value so one can write e.g. "false" or "NO" (for a `false` result),
 // or "True" or "yes" (for a `true` result).
 func (kv *TKeyVal) AsBool() (rVal bool) {
-	val := kv.Value + `0` // in case of empty string: default FALSE
+	val := kv.Value + `@` // in case of empty string: default FALSE
 	switch val[:1] {
 	case `0`, `f`, `F`, `n`, `N`:
 		return false
@@ -53,7 +53,7 @@ func (kv *TKeyVal) AsFloat32() (float32, bool) {
 		return float32(f64), true
 	}
 
-	return 0.0, false
+	return float32(0.0), false
 } // AsFloat32()
 
 // `AsFloat64` returns the value of the key/value pair as
@@ -76,7 +76,7 @@ func (kv *TKeyVal) AsInt() (int, bool) {
 		return i, true
 	}
 
-	return 0, false
+	return int(0), false
 } // AsInt()
 
 // `AsInt16` returns the value of the key/value pair as a 16bit integer.
@@ -85,7 +85,7 @@ func (kv *TKeyVal) AsInt16() (int16, bool) {
 		return int16(i64), true
 	}
 
-	return 0, false
+	return int16(0), false
 } // AsInt16()
 
 // `AsInt32` returns the value of the key/value pair as a 32bit integer.
@@ -94,11 +94,11 @@ func (kv *TKeyVal) AsInt32() (int32, bool) {
 		return int32(i64), true
 	}
 
-	return 0, false
+	return int32(0, false
 } // AsInt32()
 
 // `AsInt64` returns the value of the key/value pair as a 64bit integer.
-func (kv *TKeyVal) AsInt64() (rVal int64, rOK bool) {
+func (kv *TKeyVal) AsInt64() (int64, bool) {
 	if i64, err := strconv.ParseInt(kv.Value, 10, 64); nil == err {
 		return i64, true
 	}
@@ -106,7 +106,7 @@ func (kv *TKeyVal) AsInt64() (rVal int64, rOK bool) {
 	return 0, false
 } // AsInt64()
 
-// `AsString` returns the value of the key/value pair as a string.
+// `AsString` returns the value of the key's value as a string.
 //
 // If the key's value is empty then the second return value
 // will be `false`.
