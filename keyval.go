@@ -94,7 +94,7 @@ func (kv *TKeyVal) AsInt32() (int32, bool) {
 		return int32(i64), true
 	}
 
-	return int32(0, false
+	return int32(0), false
 } // AsInt32()
 
 // `AsInt64` returns the value of the key/value pair as a 64bit integer.
