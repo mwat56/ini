@@ -51,7 +51,7 @@ Lines that can't be identified as either a _section heading_ or a _key/value pai
 Quotes and whitespace surrounding a key or a value are ignored.
 
 A line ending with a backslash (`\`) will be concatenated with the following line (unless that's a comment line).
-By that mechanism you can use really long values spaning several lines.
+By that mechanism you can use really long values spawning several lines.
 
 You can create a `TIniList` instance by simply calling `ini.New(aFilename)` and then using the numerous methods (including `Load()` and `Store()`).
 
