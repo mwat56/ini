@@ -20,7 +20,7 @@
 
 Over the times several different file formats have been developed just for storing configuration data for some program.
 While they all may have some merits, for me the two-dimensional INI file format – made popular by the DR-/MS-/PC-DOS and MS-Windows versions in the 80s of the last century – was always sufficient for my needs.
-This package provides the `TIniList` class to read/parse, modify, and write such INI files. It doesn't need any configuration but simply does what it's supposed to do.
+This package provides the `TSectionList` class to read/parse, modify, and write such INI files. It doesn't need any configuration but simply does what it's supposed to do.
 
 ## Installation
 
@@ -53,17 +53,19 @@ Quotes and whitespace surrounding a key or a value are ignored.
 A line ending with a backslash (`\`) will be concatenated with the following line (unless that's a comment line).
 By that mechanism you can use really long values spawning several lines.
 
-You can create a `TIniList` instance by simply calling `ini.New(aFilename)` and then using the numerous methods (including `Load()` and `Store()`).
+You can create a `TSectionList` instance by simply calling `ini.New(aFilename)` and then using the numerous methods (including `Load()` and `Store()`).
 
 _Note_ that both, section and key names, are _case sensitive_ to allow for the broadest possible range when naming them.
 The same is true for the key/value pairs which are, of course, case sensitive.
 An application using this package, however, is free to interpret the values returned in any way they like.
 
-Please look at the [source code documentation](https://godoc.org/github.com/mwat56/ini#TIniList) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
+The configured values can be retrieved from the INI list as any primitive data type calling the appropriate `Asxxx()` method.
+
+Please look at the [source code documentation](https://godoc.org/github.com/mwat56/ini#TSectionList) to see the numerous methods provided to load, get, set, and update sections and key/value pairs.
 
 ## Licence
 
-    Copyright © 2019, 2024 M.Watermann, 10247 Berlin, Germany
+    Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
                     All rights reserved
                 EMail : <support@mwat.de>
 
