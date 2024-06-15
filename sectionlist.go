@@ -24,13 +24,13 @@ type (
 
 	// A helper slice of strings (i.e. section names)
 	// used to preserve the order of INI sections.
-	TSectionOrder = []string
+	tSectionOrder = []string
 
 	// This opaque data structure is filled by e.g. `Load()`.
 	tIniSectionsList struct {
 		defSect  string        // name of default section
 		fName    string        // name of the INI file to use
-		secOrder TSectionOrder // slice containing the order of sections
+		secOrder tSectionOrder // slice containing the order of sections
 		sections tSections     // list of INI sections
 	}
 
@@ -437,7 +437,7 @@ func (sl *TSectionList) AsUInt64(aSection, aKey string) (uint64, bool) {
 // The return value is the cleared list.
 func (sl *TSectionList) Clear() *TSectionList {
 	// we leave `defSect` alone for now
-	sl.secOrder = make(TSectionOrder, 0, slDefCapacity)
+	sl.secOrder = make(tSectionOrder, 0, slDefCapacity)
 	for name := range sl.sections {
 		if cs, exists := sl.sections[name]; exists {
 			cs.Clear()
@@ -520,7 +520,7 @@ func (sl *TSectionList) Len() int {
 //
 // Returns:
 //
-//	*TIniList: The loaded INI list.
+//	*TSectionList: The loaded INI list.
 //	error: A possible error condition.
 func (sl *TSectionList) Load() (*TSectionList, error) {
 	file, rErr := os.Open(sl.fName)
@@ -572,8 +572,8 @@ func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
 //	rRead: The number of bytes read from the INI file.
 //	rErr:  A possible error condition.
 func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
-	section := sl.defSect
 	var lastLine string
+	section := sl.defSect
 
 	for lineRead := aScanner.Scan(); lineRead; lineRead = aScanner.Scan() {
 		line := aScanner.Text()
@@ -585,25 +585,25 @@ func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 			if "" == lastLine {
 				continue // Skip blank lines
 			}
-			line, lastLine = lastLine, ``
+			line, lastLine = lastLine, ""
 		}
 		if ';' == line[0] || '#' == line[0] { // comment indicators
 			if "" == lastLine {
 				continue // Skip comment lines
 			}
-			line, lastLine = lastLine, ``
+			line, lastLine = lastLine, ""
 		}
 		if '\\' == line[lineLen-1] { // possible value concatenation
 			if (1 < lineLen) && (' ' == line[lineLen-2]) {
 				lastLine += line[:lineLen-1]
 			} else {
-				lastLine += line[:lineLen-1] + ` `
+				lastLine += line[:lineLen-1] + " "
 			}
 			line = ``
 			continue // concatenation handled
 		}
 		if 0 < len(lastLine) {
-			line, lastLine = lastLine+line, ``
+			line, lastLine = lastLine+line, ""
 		}
 
 		if matches := isSectionRE.FindStringSubmatch(line); nil != matches {
@@ -617,7 +617,7 @@ func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 
 			sl.AddSectionKey(section, key, val) // ignore return value
 		} else {
-			line = `` // ignore broken lines
+			line = "" // ignore broken lines
 		}
 	}
 	rErr = aScanner.Err()
@@ -667,7 +667,7 @@ func (sl *TSectionList) RemoveSection(aSection string) bool {
 		case 0:
 			if 0 == oLen {
 				// the only list entry: replace by an empty list
-				sl.secOrder = make(TSectionOrder, 0, slDefCapacity)
+				sl.secOrder = make(tSectionOrder, 0, slDefCapacity)
 			} else {
 				// first list entry: move the remaining data
 				sl.secOrder = sl.secOrder[1:]

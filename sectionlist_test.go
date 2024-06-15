@@ -50,7 +50,7 @@ func TestTSectionList_addSection(t *testing.T) {
 	il1 := TSectionList{
 		defSect:  DefSection,
 		fName:    "/tmp/test1.ini",
-		secOrder: TSectionOrder{},
+		secOrder: tSectionOrder{},
 		sections: tSections{},
 	}
 	tests := []struct {
@@ -170,14 +170,14 @@ func TestTSectionList_Sections(t *testing.T) {
 	il0 := TSectionList{
 		defSect:  DefSection,
 		fName:    "/tmp/test1.ini",
-		secOrder: TSectionOrder{},
+		secOrder: tSectionOrder{},
 		sections: tSections{},
 	}
 
 	il1 := TSectionList{
 		defSect:  DefSection,
 		fName:    "/tmp/test1.ini",
-		secOrder: TSectionOrder{"One", "Two", "Three"},
+		secOrder: tSectionOrder{"One", "Two", "Three"},
 		sections: tSections{},
 	}
 	tests := []struct {
@@ -209,7 +209,7 @@ func TestTSectionList_Sections(t *testing.T) {
 func TestTSectionList_String(t *testing.T) {
 	id1 := TSectionList{
 		defSect: "Default",
-		secOrder: TSectionOrder{
+		secOrder: tSectionOrder{
 			"Default",
 			"Sect2",
 			"NOOP",

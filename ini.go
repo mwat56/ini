@@ -19,7 +19,7 @@ func New(aFilename string) (*TSectionList, error) {
 	result := &TSectionList{
 		defSect:  DefSection,
 		fName:    aFilename,
-		secOrder: make(TSectionOrder, 0, slDefCapacity),
+		secOrder: make(tSectionOrder, 0, slDefCapacity),
 		sections: make(tSections),
 	}
 	return result.Load()
