@@ -34,16 +34,14 @@ func TestTSection_AddKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.AddKey(tt.args.Key, tt.args.Value); got != tt.want {
-				t.Errorf("TSection.AddKey() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.AddKey() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
 } // TestTSection_AddKey()
 
 func TestTSection_AsBool(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "val1"},
 		TKeyVal{"key2", "temp"},
@@ -53,34 +51,33 @@ func TestTSection_AsBool(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal bool
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, false, true},
-		{"2", ks, kArgs{"key2"}, true, true},
-		{"3", ks, kArgs{"key3"}, false, true},
-		{"4", ks, kArgs{"key4"}, false, true},
-		{"5", ks, kArgs{"key5"}, false, false},
+		{"1", ks, "key1", false, true},
+		{"2", ks, "key2", true, true},
+		{"3", ks, "key3", false, true},
+		{"4", ks, "key4", false, true},
+		{"5", ks, "key5", false, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsBool(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsBool(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsBool() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsBool() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsBool() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsBool() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsBool()
 
 func TestTSection_AsFloat32(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "val1"},
 		TKeyVal{"key2", "2nd"},
@@ -90,34 +87,33 @@ func TestTSection_AsFloat32(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal float32
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 0, false},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 12.34, true},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 12.34, true},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsFloat32(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsFloat32(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsFloat32() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsFloat32() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsFloat32() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsFloat32() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsFloat32()
 
 func TestTSection_AsFloat64(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "1st"},
 		TKeyVal{"key2", "2nd"},
@@ -127,34 +123,33 @@ func TestTSection_AsFloat64(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal float64
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 0, false},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 12.34, true},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 12.34, true},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsFloat64(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsFloat64(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsFloat64() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsFloat64() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsFloat64() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsFloat64() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsFloat64()
 
 func TestTSection_AsInt(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "1st"},
 		TKeyVal{"key2", "2nd"},
@@ -164,34 +159,69 @@ func TestTSection_AsInt(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal int
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 0, false},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 0, false},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsInt(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsInt(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsInt() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsInt() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsInt() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsInt() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsInt()
+
+func TestTSection_AsInt8(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "2nd"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal int8
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsInt8(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsInt8() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsInt8() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsInt()
 
 func TestTSection_AsInt16(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "1st"},
 		TKeyVal{"key2", "76543"},
@@ -201,34 +231,33 @@ func TestTSection_AsInt16(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal int16
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 0, false},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 0, false},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsInt16(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsInt16(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsInt16() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsInt16() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsInt16() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsInt16() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsInt16()
 
 func TestTSection_AsInt32(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "1st"},
 		TKeyVal{"key2", "76543"},
@@ -238,34 +267,33 @@ func TestTSection_AsInt32(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal int32
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 76543, true},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 0, false},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 76543, true},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsInt32(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsInt32(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsInt32() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsInt32() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsInt32() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsInt32() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsInt32()
 
 func TestTSection_AsInt64(t *testing.T) {
-	type kArgs struct {
-		aKey string
-	}
 	ks := &TSection{
 		TKeyVal{"key1", "1st"},
 		TKeyVal{"key2", "76543"},
@@ -275,29 +303,211 @@ func TestTSection_AsInt64(t *testing.T) {
 	tests := []struct {
 		name     string
 		cs       *TSection
-		args     kArgs
+		args     string
 		wantRVal int64
 		wantROK  bool
 	}{
-		{"1", ks, kArgs{"key1"}, 0, false},
-		{"2", ks, kArgs{"key2"}, 76543, true},
-		{"3", ks, kArgs{"key3"}, 0, true},
-		{"4", ks, kArgs{"key4"}, 0, false},
-		{"5", ks, kArgs{"key5"}, 0, false},
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 76543, true},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotRVal, gotROK := tt.cs.AsInt64(tt.args.aKey)
+			gotRVal, gotROK := tt.cs.AsInt64(tt.args)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsInt64() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsInt64() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsInt64() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsInt64() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
 } // TestTSection_AsInt64()
+
+func TestTSection_AsUInt(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "2nd"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal uint
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsUInt(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsUInt() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsUInt() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsUInt()
+
+func TestTSection_AsUInt8(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "2nd"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal int8
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsInt8(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsInt8() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsInt8() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsUInt8()
+
+func TestTSection_AsUInt16(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "76543"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal uint16
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 0, false},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsUInt16(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsUInt16() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsUInt16() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsUInt16()
+
+func TestTSection_AsUInt32(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "76543"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal uint32
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 76543, true},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsUInt32(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsUInt32() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsUInt32() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsUInt32()
+
+func TestTSection_AsUInt64(t *testing.T) {
+	ks := &TSection{
+		TKeyVal{"key1", "1st"},
+		TKeyVal{"key2", "76543"},
+		TKeyVal{"key3", "0"},
+		TKeyVal{"key4", "12.34"},
+	}
+	tests := []struct {
+		name     string
+		cs       *TSection
+		args     string
+		wantRVal uint64
+		wantROK  bool
+	}{
+		{"1", ks, "key1", 0, false},
+		{"2", ks, "key2", 76543, true},
+		{"3", ks, "key3", 0, true},
+		{"4", ks, "key4", 0, false},
+		{"5", ks, "key5", 0, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRVal, gotROK := tt.cs.AsUInt64(tt.args)
+			if gotRVal != tt.wantRVal {
+				t.Errorf("%q TSection.AsUInt64() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
+			}
+			if gotROK != tt.wantROK {
+				t.Errorf("%q TSection.AsUInt64() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
+			}
+		})
+	}
+} // TestTSection_AsUInt64()
 
 func TestTSection_AsString(t *testing.T) {
 	type kArgs struct {
@@ -327,10 +537,12 @@ func TestTSection_AsString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotRVal, gotROK := tt.cs.AsString(tt.args.aKey)
 			if gotRVal != tt.wantRVal {
-				t.Errorf("TSection.AsString() gotRVal = %v, want %v", gotRVal, tt.wantRVal)
+				t.Errorf("%q TSection.AsString() gotRVal = %v, want %v",
+					tt.name, gotRVal, tt.wantRVal)
 			}
 			if gotROK != tt.wantROK {
-				t.Errorf("TSection.AsString() gotROK = %v, want %v", gotROK, tt.wantROK)
+				t.Errorf("%q TSection.AsString() gotROK = %v, want %v",
+					tt.name, gotROK, tt.wantROK)
 			}
 		})
 	}
@@ -357,7 +569,8 @@ func TestTSection_Clear(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.Clear(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("TSection.Clear() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.Clear() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -386,7 +599,8 @@ func TestTSection_HasKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.HasKey(tt.args.aKey); got != tt.want {
-				t.Errorf("TSection.HasKey() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.HasKey() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -416,7 +630,8 @@ func TestTSection_IndexOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.IndexOf(tt.args.aKey); got != tt.want {
-				t.Errorf("TSection.IndexOf() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.IndexOf() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -440,7 +655,8 @@ func TestTSection_Len(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.Len(); got != tt.want {
-				t.Errorf("TSection.Len() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.Len() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -470,7 +686,8 @@ func TestTSection_RemoveKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.RemoveKey(tt.args.aKey); got != tt.want {
-				t.Errorf("TSection.RemoveKey() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.RemoveKey() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -495,7 +712,8 @@ func TestTSection_String(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.String(); got != tt.want {
-				t.Errorf("tSection.String() = {%v}, want {%v}", got, tt.want)
+				t.Errorf("%q TSection.String() = {%v}, want {%v}",
+					tt.name, got, tt.want)
 			}
 		})
 	}
@@ -508,8 +726,8 @@ func Benchmark_TSection_String(b *testing.B) {
 		TKeyVal{"key3", "val3"},
 		TKeyVal{"key4", ""},
 	}
-	for n := 0; n < b.N; n++ {
-		if 0 == len(sl1.String()) {
+	for n := 0; n < b.N*8*8; n++ {
+		if "" == sl1.String() {
 			continue
 		}
 	}
@@ -539,31 +757,10 @@ func Benchmark_TSection_String(b *testing.B) {
 // 			continue
 // 		}
 // 	}
-// } // Benchmark_TSections_String()
+// } /
 
-func TestTSection_UpdateKey1(t *testing.T) {
-	type args struct {
-		aKey   string
-		aValue string
-	}
-	tests := []struct {
-		name    string
-		cs      *TSection
-		args    args
-		wantROK bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotROK := tt.cs.UpdateKey(tt.args.aKey, tt.args.aValue); gotROK != tt.wantROK {
-				t.Errorf("TSection.UpdateKey() = %v, want %v", gotROK, tt.wantROK)
-			}
-		})
-	}
-}
 func TestTSection_UpdateKey(t *testing.T) {
-	ks := make(TSection, 0, ilDefCapacity)
+	ks := make(TSection, 0, slDefCapacity)
 	ks.AddKey("Key1", "Value1")
 	ks.AddKey("Key2", "Value2")
 	type args struct {
@@ -585,7 +782,8 @@ func TestTSection_UpdateKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cs.UpdateKey(tt.args.aKey, tt.args.aValue); got != tt.want {
-				t.Errorf("TSection.UpdateKey() = %v, want %v", got, tt.want)
+				t.Errorf("%q TSection.UpdateKey() = %v, want %v",
+					tt.name, got, tt.want)
 			}
 		})
 	}

@@ -16,51 +16,67 @@ import (
 	"strings"
 )
 
+//lint:file-ignore ST1017 - I prefer Yoda conditions
+
 type (
-	// `tSectionList` is a list (map) of INI sections.
-	tSectionList map[string]*TSection
+	// `tSections` is a list (map) of INI sections.
+	tSections map[string]*TSection
 
 	// A helper slice of strings (i.e. section names)
 	// used to preserve the order of INI sections.
-	tSectionOrder = []string
+	TSectionOrder = []string
 
-	// This opaque data structure is filled by e.g. `LoadFile(…)`.
+	// This opaque data structure is filled by e.g. `Load()`.
 	tIniSectionsList struct {
 		defSect  string        // name of default section
 		fName    string        // name of the INI file to use
-		secOrder tSectionOrder // slice containing the order of sections
-		sections tSectionList  // list of INI sections
+		secOrder TSectionOrder // slice containing the order of sections
+		sections tSections     // list of INI sections
 	}
+
+	// `TWalkFunc()` is used by `Walk()` when visiting an entry
+	// in the INI list.
+	//
+	// see `Walk()`
+	TWalkFunc func(aSection, aKey, aVal string)
+
+	// A `TIniWalker` is used by `Walker()` when visiting an entry
+	// in the INI list.
+	//
+	// see `Walker()`
+	TIniWalker interface {
+		Walk(aSection, aKey, aVal string)
+	}
+
+	// `TSectionList` is a list of INI sections.
+	//
+	// This opaque data structure is filled by e.g. `Load(…)`.
+	//
+	// For accessing the sections and key/value pairs it provides
+	// the appropriate methods.
+	TSectionList tIniSectionsList
 )
 
-// TIniList is a list of INI sections.
-//
-// This opaque data structure is filled by e.g. `LoadFile(…)`.
-//
-// For accessing the sections and key/value pairs it provides
-// the appropriate methods.
-type TIniList tIniSectionsList
-
 const (
-	// DefSection is the name of the default section in the INI file
+	// `DefSection` is the name of the default section in the INI file
 	// which is used when there are key/value pairs in the file
 	// without a preceding section header like `[SectionName]`.
 	DefSection = `Default`
 
 	// Default list capacity.
-	ilDefCapacity = 16
+	slDefCapacity = 16
 )
 
 // Regular expressions to identify certain parts of an INI file.
 var (
 	// match: [section]
-	ilSectionRE = regexp.MustCompile(`^\[\s*([^\]]*?)\s*]$`)
+	isSectionRE = regexp.MustCompile(`^\[\s*([^\]]*?)\s*]$`)
 
 	// match: key = val
-	ilKeyValRE = regexp.MustCompile(`^([^=]+?)\s*=\s*(.*)$`)
+	isKeyValRE = regexp.MustCompile(`^([^=]+?)\s*=\s*(.*)$`)
 
 	// match: quoted ' " string " '
-	ilQuotesRE = regexp.MustCompile(`^(['"])(.*)(['"])$`)
+	isQuotesRE = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
 // `removeQuotes()` returns a quoted string w/o the quote characters.
@@ -71,7 +87,7 @@ func removeQuotes(aString string) (rString string) {
 	rString = strings.TrimSpace(aString)
 
 	// get a slice of RegEx matches:
-	matches := ilQuotesRE.FindStringSubmatch(rString)
+	matches := isQuotesRE.FindStringSubmatch(rString)
 	// we expect: (1) leading quote, (2) text, (3) trailing quote
 	if (3 < len(matches)) && (matches[1] == matches[3]) {
 		rString = matches[2]
@@ -82,21 +98,21 @@ func removeQuotes(aString string) (rString string) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// `addSection` appends a new INI section returning `true` on success or
+// `addSection()` appends a new INI section returning `true` on success or
 // `false` otherwise.
 //
 //	`aSection` The name of the INI section to add.
-func (il *TIniList) addSection(aSection string) bool {
-	if _, exists := il.sections[aSection]; exists {
+func (sl *TSectionList) addSection(aSection string) bool {
+	if _, exists := sl.sections[aSection]; exists {
 		return true // already there: nothing more to do
 	}
 
-	// we make room for initially 8 key/value pairs
-	sect := make(TSection, 0, ilDefCapacity)
-	il.sections[aSection] = &sect
-	if _, ok := il.sections[aSection]; ok {
+	// we make room for initially 16 key/value pairs
+	sect := make(TSection, 0, slDefCapacity)
+	sl.sections[aSection] = &sect
+	if _, ok := sl.sections[aSection]; ok {
 		// add new section name to order list
-		il.secOrder = append(il.secOrder, aSection)
+		sl.secOrder = append(sl.secOrder, aSection)
 
 		return true
 	}
@@ -104,21 +120,21 @@ func (il *TIniList) addSection(aSection string) bool {
 	return false
 } // addSection()
 
-// `AddSectionKey` appends a new key/value pair to `aSection`
+// `AddSectionKey()` appends a new key/value pair to `aSection`
 // returning `true` on success or `false` otherwise.
 //
 //	`aSection` The name of the INI section to use.
 //	`aKey` The key of the key/value pair to add.
 //	`aValue` The value of the key/value pair to add.
-func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AddSectionKey(aSection, aKey, aValue string) bool {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if !il.addSection(aSection) {
+	if ok := sl.addSection(aSection); !ok {
 		return false // can't find nor add the section
 	}
 
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AddKey(aKey, aValue)
 	}
 
@@ -129,13 +145,13 @@ func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
  * Public methods to return INI values from a section as a certain data type.
  */
 
-// `AsBool` returns the value of `aKey` in `aSection` as a boolean value.
+// `AsBool()` returns the value of `aKey` in `aSection` as a boolean value.
 //
 // If the given aKey in `aSection` doesn't exist then the second (bool)
 // return value will be `false`.
 //
 // `0`, `f`, `F`, `n`, and `N` are considered `false` while
-// `1`, `t`, `T`, `y`, and `Y` are considered `true`;
+// `1`, `t`, `T`, `y`, `Y`, `j`, `J`, `o`, `O` are considered `true`;
 // these values will be given in the first result value.
 // All other values will give `false` as the second result value.
 //
@@ -145,19 +161,21 @@ func (il *TIniList) AddSectionKey(aSection, aKey, aValue string) bool {
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsBool(aSection, aKey string) (rVal, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsBool(aSection, aKey string) (bool, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsBool(aKey)
 	}
 
-	return
+	return false, false
 } // AsBool()
 
-// `AsFloat32` returns the value of `aKey` in `aSection` as a 32bit floating
-// point.
+// Float
+
+// `AsFloat32` returns the value of `aKey` in `aSection` as a 32bit
+// floating point.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second (bool)
 // return value will be `false`.
@@ -168,11 +186,11 @@ func (il *TIniList) AsBool(aSection, aKey string) (rVal, rOK bool) {
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsFloat32(aKey)
 	}
 
@@ -191,108 +209,225 @@ func (il *TIniList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsFloat64(aKey)
 	}
 
 	return
 } // AsFloat64()
 
-// `AsInt` returns the value of `aKey` in `aSection` as an integer.
+// Int
+
+// `AsInt()` returns the value of `aKey` in `aSection` as an integer.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsInt(aSection, aKey string) (rVal int, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsInt(aSection, aKey string) (int, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsInt(aKey)
 	}
 
-	return
+	return int(0), false
 } // AsInt()
 
-// `AsInt16` return the value of `aKey` in `aSection` as a 16bit integer.
+// `AsInt8()` returns the value of `aKey` in `aSection` as a 8bit integer.
 //
 // If the given `aKey` in `aSection` doesn't exist then the second
-// (`rOK`) return value will be `false`.
+// return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsInt16(aSection, aKey string) (rVal int16, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsInt8(aSection, aKey string) (int8, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsInt8(aKey)
+	}
+
+	return int8(0), false
+} // AsInt8()
+
+// `AsInt16()` return the value of `aKey` in `aSection` as a 16bit integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
+// return value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AsInt16(aSection, aKey string) (int16, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsInt16(aKey)
 	}
 
-	return
+	return int16(0), false
 } // AsInt16()
 
-// `AsInt32` return the value of `aKey` in `aSection` as a 32bit integer.
+// `AsInt32()` return the value of `aKey` in `aSection` as a 32bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+// If the given `aKey` in `aSection` doesn't exist then the second
 // return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsInt32(aSection, aKey string) (rVal int32, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsInt32(aSection, aKey string) (int32, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsInt32(aKey)
 	}
 
-	return
+	return int32(0), false
 } // AsInt32()
 
-// `AsInt64` return the value of `aKey` in `aSection` as a 64bit integer.
+// `AsInt64()` return the value of `aKey` in `aSection` as a 64bit integer.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
-// return value will be `false`.
+// If the given `aKey` in `aSection` doesn't exist then the second return
+// value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsInt64(aSection, aKey string) (rVal int64, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsInt64(aSection, aKey string) (int64, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsInt64(aKey)
 	}
 
-	return
+	return int64(0), false
 } // AsInt64()
 
-// `AsString` returns the value of `aKey` in `aSection` as a string.
 //
-// If the given `aKey` in `aSection` doesn't exist then the second (`rOK`)
+
+// `AsString()` returns the value of `aKey` in `aSection` as a string.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
 // return value will be `false`.
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) AsString(aSection, aKey string) (string, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.AsString(aKey)
 	}
 
-	return
+	return "", false
 } // AsString()
 
-// `Clear` empties the internal data structures.
+// Uint
+
+// `AsUInt()` returns the value of `aKey` in `aSection` as an integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
+// return value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AsUInt(aSection, aKey string) (uint, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsUInt(aKey)
+	}
+
+	return uint(0), false
+} // AsUInt()
+
+// `AsUInt8()` returns the value of `aKey` in `aSection` as a 8bit integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
+// return value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AsUInt8(aSection, aKey string) (uint8, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsUInt8(aKey)
+	}
+
+	return uint8(0), false
+} // AsUInt8()
+
+// `AsUInt16()` return the value of `aKey` in `aSection` as a 16bit integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
+// return value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AsUInt16(aSection, aKey string) (uint16, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsUInt16(aKey)
+	}
+
+	return uint16(0), false
+} // AsUInt16()
+
+// `AsUInt32()` return the value of `aKey` in `aSection` as a 32bit integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second
+// return value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AUInt32(aSection, aKey string) (uint32, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsUInt32(aKey)
+	}
+
+	return uint32(0), false
+} // AsUInt32()
+
+// `AsUInt64()` return the value of `aKey` in `aSection` as an unsigned
+// 64bit integer.
+//
+// If the given `aKey` in `aSection` doesn't exist then the second return
+// value will be `false`.
+//
+//	`aSection` the name of the INI section to lookup.
+//	`aKey` The name of the key to lookup.
+func (sl *TSectionList) AsUInt64(aSection, aKey string) (uint64, bool) {
+	if "" == aSection {
+		aSection = sl.defSect
+	}
+	if cs, exists := sl.sections[aSection]; exists {
+		return cs.AsUInt64(aKey)
+	}
+
+	return uint64(0), false
+} // AsUInt64()
+
+//
+
+// `Clear()` empties the internal data structures.
 //
 // This method can be called once the program has used the config values
 // stored in the INI file to setup the application. Emptying these data
@@ -300,116 +435,144 @@ func (il *TIniList) AsString(aSection, aKey string) (rVal string, rOK bool) {
 // needed anymore.
 //
 // The return value is the cleared list.
-func (il *TIniList) Clear() *TIniList {
+func (sl *TSectionList) Clear() *TSectionList {
 	// we leave `defSect` alone for now
-	il.secOrder = make(tSectionOrder, 0, ilDefCapacity)
-	for name := range il.sections {
-		if cs, exists := il.sections[name]; exists {
+	sl.secOrder = make(TSectionOrder, 0, slDefCapacity)
+	for name := range sl.sections {
+		if cs, exists := sl.sections[name]; exists {
 			cs.Clear()
 		}
-		delete(il.sections, name)
+		delete(sl.sections, name)
 	}
-	il.sections = make(tSectionList)
+	sl.sections = make(tSections)
 
-	return il
+	return sl
 } // Clear()
 
-// `Filename` returns the configured filename of the INI file.
-func (il *TIniList) Filename() string {
-	return il.fName
+// `Filename()` returns the configured filename of the INI file.
+func (sl *TSectionList) Filename() string {
+	return sl.fName
 } // Filename()
 
-// `GetSection` returns the INI section named `aSection`, or an empty list
+// `GetSection()` returns the INI section named `aSection`, or an empty list
 // if not found.
 //
 //	`aSection` The name of the INI section to lookup.
-func (il *TIniList) GetSection(aSection string) *TSection {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+func (sl *TSectionList) GetSection(aSection string) *TSection {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if result, ok := il.sections[aSection]; ok {
+	if result, ok := sl.sections[aSection]; ok {
 		return result
 	}
 
 	return &TSection{}
 } // GetSection()
 
-// `HasSection` checks whether the INI data contain `aSection`.
+// `HasSection()` checks whether the INI data contain `aSection`.
 //
 //	`aSection` is the name of the INI section to lookup.
-func (il *TIniList) HasSection(aSection string) (rOK bool) {
-	if 0 == len(aSection) {
-		_, rOK = il.sections[il.defSect]
+func (sl *TSectionList) HasSection(aSection string) (rOK bool) {
+	if "" == aSection {
+		_, rOK = sl.sections[sl.defSect]
 	} else {
-		_, rOK = il.sections[aSection]
+		_, rOK = sl.sections[aSection]
 	}
+
 	return
 } // HasSection()
 
-// `HasSectionKey` checks whether the INI data contain `aSection` with
+// `HasSectionKey()` checks whether the INI data contain `aSection` with
 // `aKey` returning whether it exists at all.
 //
 //	`aSection` The INI section to lookup.
 //	`aKey` The key name to lookup in `aSection`.
-func (il *TIniList) HasSectionKey(aSection, aKey string) bool {
-	if 0 == len(aKey) {
+func (sl *TSectionList) HasSectionKey(aSection, aKey string) bool {
+	if "" == aKey {
 		return false
 	}
-	if 0 == len(aSection) {
-		aSection = il.defSect
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, ok := il.sections[aSection]; ok {
+	if cs, ok := sl.sections[aSection]; ok {
 		return cs.HasKey(aKey)
 	}
 
 	return false
 } // HasSectionKey()
 
-// `Len` returns the number of INI sections.
-func (il *TIniList) Len() int {
-	return len(il.sections)
+// `Len()` returns the number of INI sections.
+//
+// It is used to determine the size of the list of sections.
+//
+// Returns:
+//
+//	rOK: The number of sections in the INI file.
+func (sl *TSectionList) Len() int {
+	return len(sl.sections)
 } // Len()
 
-// `Load` reads the configured filename returning the data structure
+// `Load()` reads the configured filename returning the data structure
 // read from the INI file and a possible error condition.
 //
 // This method reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
-func (il *TIniList) Load() (*TIniList, error) {
-	file, rErr := os.Open(il.fName)
+//
+// Returns:
+//
+//	*TIniList: The loaded INI list.
+//	error: A possible error condition.
+func (sl *TSectionList) Load() (*TSectionList, error) {
+	file, rErr := os.Open(sl.fName)
 	if nil != rErr {
-		return il, rErr
+		return sl, rErr
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	_, err := il.read(scanner)
+	_, err := sl.read(scanner)
 
-	return il, err
+	return sl, err
 } // Load()
 
-// `Merge` copies or merges all INI sections with all key/value pairs
-// into this list.
-//
-//	`aINI` The INI list to merge with this one.
-func (il *TIniList) Merge(aINI *TIniList) *TIniList {
-	aINI.Walk(il.mergeWalker)
-
-	return il
-} // Merge()
-
-// `mergeWalker` inserts the given key/value pair in `aSection`.
-func (il *TIniList) mergeWalker(aSection, aKey, aValue string) {
-	il.AddSectionKey(aSection, aKey, aValue)
+// `mergeWalker()` inserts the given key/value pair in `aSection`.
+func (sl *TSectionList) mergeWalker(aSection, aKey, aValue string) {
+	sl.AddSectionKey(aSection, aKey, aValue)
 } // mergeWalker()
 
-// `read` parses the INI file returning the number of bytes read
+// `Merge()` copies or merges all INI sections with all key/value pairs
+// into this list.
+//
+// Returns:
+//
+//	`aINI` The INI list to merge with this one.
+func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
+	aINI.Walk(sl.mergeWalker)
+
+	return sl
+} // Merge()
+
+// `read()` parses the INI file returning the number of bytes read
 // and a possible error.
 //
 // This method reads one line of the INI file at a time skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
-func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
-	section := il.defSect
+//
+// The method updates the current section name and adds new key/value
+// pairs to the list of sections.
+//
+// This method is called by the `Load()` method.
+//
+// Parameters:
+//
+//	aScanner: A bufio.Scanner instance that reads from the INI file.
+//
+// Returns:
+//
+//	rRead: The number of bytes read from the INI file.
+//	rErr:  A possible error condition.
+func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
+	section := sl.defSect
 	var lastLine string
 
 	for lineRead := aScanner.Scan(); lineRead; lineRead = aScanner.Scan() {
@@ -419,18 +582,18 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 		line = strings.TrimSpace(line)
 		lineLen := len(line)
 		if 0 == lineLen {
-			if 0 == len(lastLine) {
+			if "" == lastLine {
 				continue // Skip blank lines
 			}
 			line, lastLine = lastLine, ``
 		}
-		if ';' == line[0] || '#' == line[0] {
-			if 0 == len(lastLine) {
+		if ';' == line[0] || '#' == line[0] { // comment indicators
+			if "" == lastLine {
 				continue // Skip comment lines
 			}
 			line, lastLine = lastLine, ``
 		}
-		if '\\' == line[lineLen-1] {
+		if '\\' == line[lineLen-1] { // possible value concatenation
 			if (1 < lineLen) && (' ' == line[lineLen-2]) {
 				lastLine += line[:lineLen-1]
 			} else {
@@ -443,16 +606,16 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 			line, lastLine = lastLine+line, ``
 		}
 
-		if matches := ilSectionRE.FindStringSubmatch(line); nil != matches {
+		if matches := isSectionRE.FindStringSubmatch(line); nil != matches {
 			// update the current section name
 			section = strings.TrimSpace(matches[1])
-		} else if matches := ilKeyValRE.FindStringSubmatch(line); nil != matches {
+		} else if matches := isKeyValRE.FindStringSubmatch(line); nil != matches {
 			// get a slice of RegEx matches,
 			// we expect (1) key, (2) value
 			key := strings.TrimSpace(matches[1])
 			val := removeQuotes(matches[2])
 
-			il.AddSectionKey(section, key, val)
+			sl.AddSectionKey(section, key, val) // ignore return value
 		} else {
 			line = `` // ignore broken lines
 		}
@@ -462,35 +625,41 @@ func (il *TIniList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 	return
 } // read()
 
-// `RemoveSection` deletes `aSection` from the list of INI sections.
+// `RemoveSection()` deletes `aSection` from the list of INI sections.
+//
+// Parameters:
 //
 //	`aSection` The name of the INI section to remove.
-func (il *TIniList) RemoveSection(aSection string) bool {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+//
+// Returns:
+//
+//	bool: `true` on success, `false` on failure.
+func (sl *TSectionList) RemoveSection(aSection string) bool {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	_, exists := il.sections[aSection]
+	_, exists := sl.sections[aSection]
 	if !exists {
 		// section doesn't exist which satisfies the removal wish
 		return true
 	}
 
-	delete(il.sections, aSection)
-	if 0 < len(il.sections) {
-		if _, exists = il.sections[aSection]; exists {
+	delete(sl.sections, aSection)
+	if 0 < len(sl.sections) {
+		if _, exists = sl.sections[aSection]; exists {
 			return false // this should never happen!
 		}
 	}
 
 	// len - 1: because list is zero-based
-	oLen := len(il.secOrder) - 1
+	oLen := len(sl.secOrder) - 1
 	if 0 > oLen {
 		// empty list
 		return true
 	}
 
 	// remove secOrder entry:
-	for idx, name := range il.secOrder {
+	for idx, name := range sl.secOrder {
 		if name != aSection {
 			continue
 		}
@@ -498,18 +667,18 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 		case 0:
 			if 0 == oLen {
 				// the only list entry: replace by an empty list
-				il.secOrder = make(tSectionOrder, 0, ilDefCapacity)
+				sl.secOrder = make(TSectionOrder, 0, slDefCapacity)
 			} else {
 				// first list entry: move the remaining data
-				il.secOrder = il.secOrder[1:]
+				sl.secOrder = sl.secOrder[1:]
 			}
 
 		case oLen:
 			// last list entry
-			il.secOrder = il.secOrder[:idx]
+			sl.secOrder = sl.secOrder[:idx]
 
 		default:
-			il.secOrder = append(il.secOrder[:idx], il.secOrder[idx+1:]...)
+			sl.secOrder = append(sl.secOrder[:idx], sl.secOrder[idx+1:]...)
 		}
 
 		return true
@@ -518,19 +687,25 @@ func (il *TIniList) RemoveSection(aSection string) bool {
 	return false
 } // RemoveSection()
 
-// `RemoveSectionKey` removes aKey from aSection.
+// `RemoveSectionKey()` removes aKey from aSection.
 //
 // This method returns 'true' if either `aSection` or `aKey` doesn't exist
 // or if `aKey` in `aSection` was successfully removed, or `false` otherwise.
 //
+// Parameters:
+//
 //	`aSection` is the name of the INI section to use.
 //	`aKey` The name of the key/value pair to remove.
-func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
-	if 0 == len(aSection) {
-		aSection = il.defSect
+//
+// Returns:
+//
+//	bool: `true` on success, `false` on failure.
+func (sl *TSectionList) RemoveSectionKey(aSection, aKey string) bool {
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	cs, exists := il.sections[aSection]
-	if (!exists) || (0 == len(aKey)) {
+	cs, exists := sl.sections[aSection]
+	if (!exists) || ("" == aKey) {
 		// section or key doesn't exist
 		return true
 	}
@@ -538,35 +713,53 @@ func (il *TIniList) RemoveSectionKey(aSection, aKey string) bool {
 	return cs.RemoveKey(aKey)
 } // RemoveSectionKey()
 
-// `SetFilename` sets the filename of the INI file to use.
+// `Sections()` returns a list of section names in the order they
+// appear in the INI file.
+//
+// The returned list is a slice of strings. The length of the slice
+// is the number of sections in the INI file.
+//
+// Returns:
+//
+//	The number of sections in the returned list.
+func (sl *TSectionList) Sections() ([]string, int) {
+	dst := make([]string, len(sl.secOrder))
+	len := copy(dst, sl.secOrder)
+
+	return dst, len
+} // Sections()
+
+// `SetFilename()` sets the filename of the INI file to use.
+//
+// Parameters:
 //
 //	`aFilename` The name to use for the INI file.
-func (il *TIniList) SetFilename(aFilename string) *TIniList {
-	il.fName = strings.TrimSpace(aFilename)
+func (sl *TSectionList) SetFilename(aFilename string) *TSectionList {
+	sl.fName = strings.TrimSpace(aFilename)
 
-	return il
+	return sl
 } // SetFilename()
 
-// `Store` writes all INI data to the configured filename returning
+// `Store()` writes all INI data to the configured filename returning
 // the number of bytes written and a possible error.
-func (il *TIniList) Store() (int, error) {
-	file, err := os.Create(il.fName)
+func (sl *TSectionList) Store() (int, error) {
+	file, err := os.Create(sl.fName)
 	if err != nil {
 		return 0, err
 	}
 	defer file.Close()
 
-	return file.Write([]byte(il.String()))
+	return file.Write([]byte(sl.String()))
 } // Store()
 
-// String returns a string representation of an INI section list.
-func (il *TIniList) String() (rString string) {
+// String() returns a string representation of the INI section list.
+func (sl *TSectionList) String() (rString string) {
 	// use the secOrder list to determine the order of sections
-	for _, name := range il.secOrder {
-		if 0 == len(name) {
-			name = il.defSect
+	for _, name := range sl.secOrder {
+		if "" == name {
+			name = sl.defSect
 		}
-		if cs, exists := il.sections[name]; exists {
+		if cs, exists := sl.sections[name]; exists {
 			rString += "\n[" + name + "]\n" + cs.String()
 		}
 	}
@@ -574,7 +767,25 @@ func (il *TIniList) String() (rString string) {
 	return
 } // String()
 
-// `updateSectKey` replaces the current value of `aKey` in `aSection`
+// // String() returns a string representation of the INI section list.
+// func (sl *TSectionList) String2() (rString string) {
+// 	var sb strings.Builder
+// 	// use the secOrder list to determine the order of sections
+// 	for _, name := range sl.secOrder {
+// 		if "" == name) {
+// 			name = sl.defSect
+// 		}
+// 		if cs, exists := sl.sections[name]; exists {
+// 			// ignore return values
+// 			_, _ = sb.WriteString(fmt.Sprintf("\n[%s]\n%s",
+// 				name, cs.String2()))
+// 		}
+// 	}
+
+// 	return sb.String()
+// } // String2()
+
+// `updateSectKey()` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue`.
 //
 // Private method used by the UpdateSectKeyXXX() methods.
@@ -582,23 +793,22 @@ func (il *TIniList) String() (rString string) {
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The value of the key/value pair to update.
-func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
-	if 0 == len(aKey) {
+func (sl *TSectionList) updateSectKey(aSection, aKey, aValue string) bool {
+	if "" == aKey {
 		return false
 	}
-
-	if 0 == len(aSection) {
-		aSection = il.defSect
+	if "" == aSection {
+		aSection = sl.defSect
 	}
-	if cs, exists := il.sections[aSection]; exists {
+	if cs, exists := sl.sections[aSection]; exists {
 		return cs.UpdateKey(aKey, aValue)
 	}
 
-	// if `aSection` or `aKey` doesn't exist then create a new entry
-	return il.AddSectionKey(aSection, aKey, aValue)
+	// if `aSection` or `aKey` doesn't exist we create a new entry
+	return sl.AddSectionKey(aSection, aKey, aValue)
 } // updateSectKey()
 
-// `UpdateSectKeyBool` replaces the current value of `aKey` in `aSection`
+// `UpdateSectKeyBool()` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` boolean.
 //
 // If the given `aValue` is `true` then the string "true" is used
@@ -607,33 +817,43 @@ func (il *TIniList) updateSectKey(aSection, aKey, aValue string) bool {
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The boolean value of the key/value pair to update.
-func (il *TIniList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
+func (sl *TSectionList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	if aValue {
-		return il.updateSectKey(aSection, aKey, `true`)
+		return sl.updateSectKey(aSection, aKey, `true`)
 	}
 
-	return il.updateSectKey(aSection, aKey, `false`)
+	return sl.updateSectKey(aSection, aKey, `false`)
 } // UpdateSectKeyBool()
 
-// `UpdateSectKeyFloat` replaces the current value of aKey in `aSection`
+// `UpdateSectKeyFloat()` replaces the current value of aKey in `aSection`
 // by the provided new `aValue` float.
 //
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The float64 value of the key/value pair to update.
-func (il *TIniList) UpdateSectKeyFloat(aSection, aKey string, aValue float64) bool {
-	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%f", aValue))
+func (sl *TSectionList) UpdateSectKeyFloat(aSection, aKey string, aValue float64) bool {
+	return sl.updateSectKey(aSection, aKey, fmt.Sprintf("%f", aValue))
 } // UpdateSectKeyFloat()
 
-// `UpdateSectKeyInt` replaces the current value of `aKey` in `aSection`
+// `UpdateSectKeyInt()` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` integer.
 //
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The int64 value of the key/value pair to update.
-func (il *TIniList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
-	return il.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
+func (sl *TSectionList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
+	return sl.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
 } // UpdateSectKeyInt()
+
+// `UpdateSectKeyUInt()` replaces the current value of `aKey` in `aSection`
+// by the provided new `aValue` unsigned integer.
+//
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The int64 value of the key/value pair to update.
+func (sl *TSectionList) UpdateSectKeyUInt(aSection, aKey string, aValue uint64) bool {
+	return sl.updateSectKey(aSection, aKey, fmt.Sprintf("%d", aValue))
+} // UpdateSectKeyUInt()
 
 // `UpdateSectKeyStr` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` string.
@@ -641,8 +861,34 @@ func (il *TIniList) UpdateSectKeyInt(aSection, aKey string, aValue int64) bool {
 //	`aSection` The name of the INI section to lookup.
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The string value of the key/value pair to update.
-func (il *TIniList) UpdateSectKeyStr(aSection, aKey, aValue string) bool {
-	return il.updateSectKey(aSection, aKey, strings.TrimSpace(aValue))
+func (sl *TSectionList) UpdateSectKeyStr(aSection, aKey, aValue string) bool {
+	return sl.updateSectKey(aSection, aKey, strings.TrimSpace(aValue))
 } // UpdateSectKeyStr()
+
+// `Walk()` traverses through all entries in the INI list sections calling
+// `aFunc` for each entry.
+//
+//	`aFunc` The function called for each key/value pair in all sections.
+func (sl *TSectionList) Walk(aFunc TWalkFunc) {
+	// We ignore the `secOrder` list because the
+	// order of sections doesn't matter here.
+	for section := range sl.sections {
+		if "" == section {
+			section = sl.defSect
+		}
+		cs := sl.sections[section]
+		for _, kv := range *cs {
+			aFunc(section, kv.Key, kv.Value)
+		}
+	}
+} // Walk()
+
+// `Walker()` traverses through all entries in the INI list sections
+// calling `aWalker` for each entry.
+//
+//	`aWalker` An object implementing the `TIniWalker` interface.
+func (sl *TSectionList) Walker(aWalker TIniWalker) {
+	sl.Walk(aWalker.Walk)
+} // Walker()
 
 /* _EoF_ */
