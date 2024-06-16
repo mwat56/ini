@@ -1,5 +1,5 @@
 /*
-Copyright © 2019, 2024 M.Watermann, 10247 Berlin, Germany
+Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
 
 	   All rights reserved
 	EMail : <support@mwat.de>
@@ -20,26 +20,27 @@ const (
 )
 
 func Test_removeQuotes(t *testing.T) {
-	si1 := "'this is a text'"
-	so1 := "this is a text"
-	si2 := " \" this is a text \" "
-	ws2 := " this is a text "
-	si3 := " \" this is a text ' "
-	ws3 := "\" this is a text '"
+	si1, ws1 := "'this is a text'", "this is a text"
+	si2, ws2 := " \" this is a text \" ", "this is a text"
+	si3, ws3 := " \" this is a text ' ", "\" this is a text '"
+	si4, ws4 := " this is a text ", "this is a text"
+	si5, ws5 := " this is a text ' ", "this is a text '"
 	tests := []struct {
 		name        string
 		args        string
 		wantRString string
 	}{
+		{"1", si1, ws1},
+		{"2", si2, ws2},
+		{"3", si3, ws3},
+		{"4", si4, ws4},
+		{"5", si5, ws5},
 		// TODO: Add test cases.
-		{" 1", si1, so1},
-		{" 2", si2, ws2},
-		{" 3", si3, ws3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotRString := removeQuotes(tt.args); gotRString != tt.wantRString {
-				t.Errorf("%q removeQuotes() = %v, want %v",
+				t.Errorf("%q removeQuotes() = [%s], want [%s]",
 					tt.name, gotRString, tt.wantRString)
 			}
 		})
