@@ -27,7 +27,7 @@ func New(aFilename string) (*TSectionList, error) {
 		secOrder: make(tSectionOrder, 0, slDefCapacity),
 		sections: make(tSections),
 	}
-	return result.Load()
+	return result.load()
 } // New()
 
 // `ReadIniData()` returns the config values read from INI file(s).
@@ -39,7 +39,9 @@ func New(aFilename string) (*TSectionList, error) {
 //	(4) read the user-local `~/.config/aName.ini`,
 //	(5) read the `-ini` commandline argument.
 //
-// This function considers only the `Default` section of the INI files.
+// This utility function returns the `Default` section of the INI files.
+// It is intended for applications that only use the single default section
+// for its configuration values.
 //
 // Example:
 //

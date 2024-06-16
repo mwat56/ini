@@ -26,7 +26,7 @@ type (
 	// used to preserve the order of INI sections.
 	tSectionOrder = []string
 
-	// This opaque data structure is filled by e.g. `Load()`.
+	// This opaque data structure is filled by e.g. `load()`.
 	tIniSectionsList struct {
 		defSect  string        // name of default section
 		fName    string        // name of the INI file to use
@@ -50,7 +50,7 @@ type (
 
 	// `TSectionList` is a list of INI sections.
 	//
-	// This opaque data structure is filled by e.g. `Load(…)`.
+	// This opaque data structure is filled by e.g. `load()`.
 	//
 	// For accessing the sections and key/value pairs it provides
 	// the appropriate methods.
@@ -76,7 +76,7 @@ var (
 	isKeyValRE = regexp.MustCompile(`^([^=]+?)\s*=\s*(.*)$`)
 
 	// match: quoted ' " string " '
-	isQuotesRE = regexp.MustCompile(`^(['"])(.*)(['"])$`)
+	isQuotesRE = regexp.MustCompile(`^\s*(['"])\s*(.*?)\s*(['"])\s*$`)
 )
 
 // `removeQuotes()` returns a quoted string w/o the quote characters.
@@ -512,7 +512,7 @@ func (sl *TSectionList) Len() int {
 	return len(sl.sections)
 } // Len()
 
-// `Load()` reads the configured filename returning the data structure
+// `load()` reads the configured filename returning the data structure
 // read from the INI file and a possible error condition.
 //
 // This method reads one line at a time of the INI file skipping both
@@ -522,7 +522,7 @@ func (sl *TSectionList) Len() int {
 //
 //	*TSectionList: The loaded INI list.
 //	error: A possible error condition.
-func (sl *TSectionList) Load() (*TSectionList, error) {
+func (sl *TSectionList) load() (*TSectionList, error) {
 	file, rErr := os.Open(sl.fName)
 	if nil != rErr {
 		return sl, rErr
@@ -533,15 +533,27 @@ func (sl *TSectionList) Load() (*TSectionList, error) {
 	_, err := sl.read(scanner)
 
 	return sl, err
-} // Load()
+} // load()
 
 // `mergeWalker()` inserts the given key/value pair in `aSection`.
+//
+// This method is called by the `Merge()` method.
+//
+// Parameters:
+//
+//	`aSection` The name of the INI section to lookup.
+//	`aKey` The name of the key/value pair to use.
+//	`aValue` The value of the key/value pair to update.
 func (sl *TSectionList) mergeWalker(aSection, aKey, aValue string) {
 	sl.AddSectionKey(aSection, aKey, aValue)
 } // mergeWalker()
 
 // `Merge()` copies or merges all INI sections with all key/value pairs
 // into this list.
+//
+// Parameters:
+//
+//	`aINI` The INI sections to merge with this list.
 //
 // Returns:
 //
@@ -552,8 +564,8 @@ func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
 	return sl
 } // Merge()
 
-// `read()` parses the INI file returning the number of bytes read
-// and a possible error.
+// `read()` reads/parses the INI file data returning the number of bytes
+// read and a possible error.
 //
 // This method reads one line of the INI file at a time skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
@@ -561,7 +573,7 @@ func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
 // The method updates the current section name and adds new key/value
 // pairs to the list of sections.
 //
-// This method is called by the `Load()` method.
+// This method is called by the `load()` method.
 //
 // Parameters:
 //
