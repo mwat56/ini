@@ -24,7 +24,7 @@ type (
 // `AsBool()` returns the value as a boolean value.
 //
 // `0`, `f`, `F`, `n`, and `N` are considered `false` while
-// `1`, `t`, `T`, `y`, and `Y` are considered `true`;
+// `1`, `t`, `T`, `y`, `Y`, `j`, `J`, `o` and `O` are considered `true`;
 // these values will be given in the result value.
 //
 // This method actually checks only the first character of the key's
@@ -73,7 +73,7 @@ func (kv *TKeyVal) AsFloat64() (float64, bool) {
 		return f64, true
 	}
 
-	return 0.0, false
+	return float64(0.0), false
 } // AsFloat64()
 
 //
@@ -120,7 +120,7 @@ func (kv *TKeyVal) AsInt64() (int64, bool) {
 		return i64, true
 	}
 
-	return 0, false
+	return int64(0), false
 } // AsInt64()
 
 //
@@ -179,6 +179,8 @@ func (kv *TKeyVal) AsUInt64() (uint64, bool) {
 	return uint64(0), false
 } // AsUInt64()
 
+//
+
 // `String()` returns a string representation of the key/value pair.
 //
 // The returned string follows the pattern `Key = value`.
@@ -190,19 +192,10 @@ func (kv *TKeyVal) String() string {
 	return kv.Key + ` = ` + kv.Value
 } // String()
 
-// func (kv *TKeyVal) String2() string {
-// 	var sb strings.Builder
-
-// 	if 0 == len(kv.Value) {
-// 		_, _ = sb.WriteString(fmt.Sprintf("%s =", kv.Key))
-// 	} else {
-// 		_, _ = sb.WriteString(fmt.Sprintf("%s = %s", kv.Key, kv.Value))
-// 	}
-// 	return sb.String()
-// } // String2()
-
 // `UpdateValue()` replaces the current value of the key/value pair by
 // the provided new `aValue`.
+//
+// Parameters:
 //
 //	`aValue` The value of the key/value pair to update.
 func (kv *TKeyVal) UpdateValue(aValue string) bool {

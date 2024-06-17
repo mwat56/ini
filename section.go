@@ -22,6 +22,8 @@ type (
 // If `aKey` doesn't exist in the section's list a new key/value pair
 // will be appended.
 //
+// Parameters:
+//
 //	`aKey` The key of the key/value pair to add.
 //	`aValue` The value of the key/value pair to add.
 func (ks *TSection) AddKey(aKey, aValue string) bool {
@@ -59,6 +61,8 @@ func (ks *TSection) AddKey(aKey, aValue string) bool {
 // so one can write e.g. "false" or "NO" (for a `false` result), or "True"
 // or "yes" (for a `true` result).
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsBool(aKey string) (bool, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -79,6 +83,8 @@ func (ks *TSection) AsBool(aKey string) (bool, bool) {
 // `AsFloat32` returns the nearest floating point number rounded using
 // IEEE754 unbiased rounding.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsFloat32(aKey string) (float32, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -97,6 +103,8 @@ func (ks *TSection) AsFloat32(aKey string) (float32, bool) {
 // `AsFloat64` returns the nearest floating point number rounded using
 // IEEE754 unbiased rounding.
 //
+// Parameters:
+//
 //	aKey` the name of the key to lookup.
 func (ks *TSection) AsFloat64(aKey string) (float64, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -113,6 +121,8 @@ func (ks *TSection) AsFloat64(aKey string) (float64, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsInt(aKey string) (int, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -126,6 +136,8 @@ func (ks *TSection) AsInt(aKey string) (int, bool) {
 //
 // If the given `aKey` doesn't exist then the second  return value
 // will be `false`.
+//
+// Parameters:
 //
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsInt8(aKey string) (int8, bool) {
@@ -141,6 +153,8 @@ func (ks *TSection) AsInt8(aKey string) (int8, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsInt16(aKey string) (int16, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -155,6 +169,8 @@ func (ks *TSection) AsInt16(aKey string) (int16, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsInt32(aKey string) (int32, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -168,6 +184,8 @@ func (ks *TSection) AsInt32(aKey string) (int32, bool) {
 //
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
+//
+// Parameters:
 //
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsInt64(aKey string) (int64, bool) {
@@ -185,10 +203,13 @@ func (ks *TSection) AsInt64(aKey string) (int64, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsString(aKey string) (string, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
-		return kv.AsString()
+		// return kv.AsString()
+		return kv.Value, true
 	}
 
 	return "", false
@@ -200,6 +221,8 @@ func (ks *TSection) AsString(aKey string) (string, bool) {
 //
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
+//
+// Parameters:
 //
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsUInt(aKey string) (uint, bool) {
@@ -215,6 +238,8 @@ func (ks *TSection) AsUInt(aKey string) (uint, bool) {
 // If the given `aKey` doesn't exist then the second  return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsUInt8(aKey string) (uint8, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -228,6 +253,8 @@ func (ks *TSection) AsUInt8(aKey string) (uint8, bool) {
 //
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
+//
+// Parameters:
 //
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsUInt16(aKey string) (uint16, bool) {
@@ -243,6 +270,8 @@ func (ks *TSection) AsUInt16(aKey string) (uint16, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsUInt32(aKey string) (uint32, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -257,6 +286,8 @@ func (ks *TSection) AsUInt32(aKey string) (uint32, bool) {
 // If the given `aKey` doesn't exist then the second return value
 // will be `false`.
 //
+// Parameters:
+//
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) AsUInt64(aKey string) (uint64, bool) {
 	if kv, ok := ks.asKeyVal(aKey); ok {
@@ -269,6 +300,8 @@ func (ks *TSection) AsUInt64(aKey string) (uint64, bool) {
 //
 
 // `asKeyVal()` returns the value of `aKey` as a key/value pair.
+//
+// Parameters:
 //
 //	`aKey` The name of the key to lookup.
 func (ks *TSection) asKeyVal(aKey string) (*TKeyVal, bool) {
@@ -299,6 +332,8 @@ func (ks *TSection) Clear() *TSection {
 
 // `HasKey()` returns whether `aKey` exists in this INI section.
 //
+// Parameters:
+//
 //	`aKey` The key to lookup.
 //
 // Returns:
@@ -310,6 +345,8 @@ func (ks *TSection) HasKey(aKey string) bool {
 
 // `IndexOf()` returns the index of `aKey` in this INI section or
 // `-1` if not found.
+//
+// Parameters:
 //
 //	`aKey` The key to lookup.
 func (ks *TSection) IndexOf(aKey string) int {
@@ -332,6 +369,8 @@ func (ks *TSection) Len() int {
 // This method returns 'true' if `aKey` doesn't exist at all, or if
 // `aKey` was successfully removed, and `false` otherwise.
 //
+// Parameters:
+//
 //	`aKey` The name of the key/value pair to remove.
 func (ks *TSection) RemoveKey(aKey string) bool {
 	idx := ks.IndexOf(aKey)
@@ -352,7 +391,7 @@ func (ks *TSection) RemoveKey(aKey string) bool {
 	return (0 > ks.IndexOf(aKey))
 } // RemoveKey()
 
-// `String()` returns a string representation of an INI section.
+// `String()` returns a string representation of the INI section.
 //
 // The single key/value pairs are delimited by a linefeed ('\n).
 func (ks *TSection) String() (rString string) {
@@ -363,17 +402,6 @@ func (ks *TSection) String() (rString string) {
 	return
 } // String()
 
-// func (ks *TSection) String2() string {
-// 	var sb strings.Builder
-
-// 	for _, kv := range *ks {
-// 		// ignore return values
-// 		_, _ = sb.WriteString(fmt.Sprintf("%s\n", kv.String2()))
-// 	}
-
-// 	return sb.String()
-// } // String2()
-
 // `UpdateKey()` replaces the current value of `aKey` by the provided
 // new `aValue`.
 //
@@ -381,6 +409,8 @@ func (ks *TSection) String() (rString string) {
 // be updated) it will be added by calling the `AddKey()` method.
 //
 // If `aKey` is an empty string the method's result will be `false`.
+//
+// Parameters:
 //
 //	`aKey` The key of the key/value pair to update.
 //	`aValue` The value of the key/value pair to update.
