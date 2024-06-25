@@ -8,6 +8,7 @@ package ini
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -1330,26 +1331,30 @@ func TestTSections_Walk(t *testing.T) {
 	}
 } // TestTSections_Walk()
 
-type tTestWalk int
+type tListWalk int
 
-func (tw tTestWalk) Walk(aSect, aKey, aVal string) {
-	fmt.Printf("\nSection: %s\nKey: %s\nValue: %s\n", aSect, aKey, aVal)
+func (tw tListWalk) Walk(aSect, aKey, aVal string) {
+	fmt.Fprintf(os.Stderr, "\nSection: %s\nKey: %s\nValue: %s\n",
+		aSect, aKey, aVal)
 } // walkFunc()
 
 func TestTSectionList_Walker(t *testing.T) {
-	var walker tTestWalk
+	var lw tListWalk
+
 	sl := prepSectionList()
 	tests := []struct {
-		name   string
-		fields TSectionList
-		args   TIniWalker
+		name string
+		args TIniWalker
 	}{
-		{"1", *sl, walker},
-		// TODO: Add test cases.
+		{"1", lw},
+		// TODO: add test cases.
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sl.Walker(tt.args)
 		})
 	}
 } // TestTSectionList_Walker()
+
+/* _EoF_ */

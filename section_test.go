@@ -7,8 +7,9 @@ Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
 package ini
 
 import (
+	"fmt"
+	"os"
 	"reflect"
-	"runtime"
 	"testing"
 )
 
@@ -24,68 +25,6 @@ func prepSection() *TSection {
 
 	return kl
 } // prepSection()
-
-func Benchmark_merge1(b *testing.B) {
-	runtime.GOMAXPROCS(1)
-
-	kl := NewSection()
-	kl2 := prepSection()
-	kl3 := prepSection()
-	_ = kl3.AddKey("key0", "0")
-	_ = kl3.AddKey("key1", "1")
-	_ = kl3.AddKey("key2", "2")
-	kl4 := prepSection()
-	_ = kl4.AddKey("key3", "funny")
-	_ = kl4.AddKey("key4", "nightmare")
-	_ = kl4.AddKey("key5", "talisman")
-	for n := 0; n < b.N<<5; n++ {
-		kl5 := kl.merge(kl2)
-		kl6 := kl5.merge(kl3)
-		_ = kl6.merge(kl3)
-	}
-} // Benchmark_merge1()
-
-func Benchmark_merge2(b *testing.B) {
-	runtime.GOMAXPROCS(1)
-
-	kl := NewSection()
-	kl2 := prepSection()
-	kl3 := prepSection()
-	_ = kl3.AddKey("key0", "0")
-	_ = kl3.AddKey("key1", "1")
-	_ = kl3.AddKey("key2", "2")
-	kl4 := prepSection()
-	_ = kl4.AddKey("key3", "funny")
-	_ = kl4.AddKey("key4", "nightmare")
-	_ = kl4.AddKey("key5", "talisman")
-
-	for n := 0; n < b.N<<5; n++ {
-		kl5 := kl.merge2(kl2)
-		kl6 := kl5.merge2(kl3)
-		_ = kl6.merge2(kl3)
-	}
-} // Benchmark_merge2()
-
-func Benchmark_Merge3(b *testing.B) {
-	runtime.GOMAXPROCS(1)
-
-	kl := NewSection()
-	kl2 := prepSection()
-	kl3 := prepSection()
-	_ = kl3.AddKey("key0", "0")
-	_ = kl3.AddKey("key1", "1")
-	_ = kl3.AddKey("key2", "2")
-	kl4 := prepSection()
-	_ = kl4.AddKey("key3", "funny")
-	_ = kl4.AddKey("key4", "nightmare")
-	_ = kl4.AddKey("key5", "talisman")
-
-	for n := 0; n < b.N<<5; n++ {
-		kl5 := kl.Merge(kl2)
-		kl6 := kl5.Merge(kl3)
-		_ = kl6.Merge(kl3)
-	}
-} // Benchmark_Merge()
 
 func TestNewSection(t *testing.T) {
 	kl := &TSection{
@@ -758,7 +697,7 @@ func TestTSection_Len(t *testing.T) {
 } // TestTSection_Len()
 
 func TestTSection_Merge(t *testing.T) {
-	kl1 := prepSection()
+	kl := prepSection()
 	kl2 := prepSection()
 	kl3 := NewSection()
 	_ = kl3.AddKey("key0", "")
@@ -768,23 +707,19 @@ func TestTSection_Merge(t *testing.T) {
 	_ = kl4.AddKey("402", "")
 
 	tests := []struct {
-		name   string
-		fields *TSection
-		args   *TSection
-		want   *TSection
+		name string
+		// fields *TSection
+		args *TSection
+		want *TSection
 	}{
-		{"0", kl1, kl1, kl1},
-		{"1", kl1, kl2, kl1},
-		{"2", kl2, kl3, kl2},
-		{"3", kl3, kl4, kl4},
+		{"0", kl, kl},
+		{"1", kl2, kl},
+		{"2", kl3, kl},
+		{"3", kl4, kl},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			kl := &TSection{
-				data: tt.fields.data,
-				// mtx:  tt.fields.mtx,
-			}
 			if got := kl.Merge(tt.args); !kl.CompareTo(got) {
 				t.Errorf("%q: TSection.Merge() = {\n%v},\nwant {\n%v}",
 					tt.name, got, tt.want)
@@ -792,66 +727,6 @@ func TestTSection_Merge(t *testing.T) {
 		})
 	}
 } // TestTSection_Merge()
-
-func Benchmark_TSection_Merge(b *testing.B) {
-	runtime.GOMAXPROCS(1)
-
-	kl1 := prepSection()
-	kl2 := NewSection()
-	_ = kl2.AddKey("key2", "")
-	_ = kl2.AddKey("bool", "")
-
-	for n := 0; n < b.N<<5; n++ {
-		if nil == kl1.Merge(kl2) {
-			continue
-		}
-	}
-} // Benchmark_TSection_Merge()
-
-func TestTSection_merge(t *testing.T) {
-	kl1 := NewSection()
-	kl2 := prepSection()
-	kl3 := NewSection()
-	_ = kl3.AddKey("301", "")
-	_ = kl3.AddKey("302", "")
-
-	tests := []struct {
-		name   string
-		fields *TSection
-		args   *TSection
-		want   *TSection
-	}{
-		{"1", kl1, kl2, kl2},
-		{"2", kl2, kl3, kl3},
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			kl := &TSection{
-				data: tt.fields.data,
-			}
-			if got := kl.merge(tt.args); !kl.CompareTo(got) {
-				t.Errorf("%q: TSection.merge() = {\n%v}, want {\n%v}",
-					tt.name, got, tt.want)
-			}
-		})
-	}
-} // TestTSection_merge()
-
-func Benchmark_TSection_merge(b *testing.B) {
-	runtime.GOMAXPROCS(1)
-
-	kl1 := prepSection()
-	kl2 := NewSection()
-	_ = kl2.AddKey("key2", "")
-	_ = kl2.AddKey("bool", "")
-
-	for n := 0; n < b.N<<5; n++ {
-		if nil == kl1.merge(kl2) {
-			continue
-		}
-	}
-} // Benchmark_TSection_merge()
 
 func TestTSection_RemoveKey(t *testing.T) {
 	kl := prepSection()
@@ -1074,3 +949,29 @@ func TestTSection_UpdateKeyStr(t *testing.T) {
 		})
 	}
 } // TestTSection_UpdateKeyStr()
+
+type tSectionWalk int
+
+func (tw tSectionWalk) Walk(aKey, aVal string) {
+	fmt.Fprintf(os.Stderr, "\nKey: %s\nValue: %s\n", aKey, aVal)
+} // walkFunc()
+
+func TestTSection_Walker(t *testing.T) {
+	var sw tSectionWalk
+
+	kl := prepSection()
+	tests := []struct {
+		name string
+		args TSectionWalkFunc
+	}{
+		{"1", sw.Walk},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kl.Walk(tt.args)
+		})
+	}
+} // TestTSection_Walker()
+
+/* _EoF_ */

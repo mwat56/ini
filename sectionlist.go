@@ -873,13 +873,13 @@ func (sl *TSectionList) RemoveSectionKey(aSection, aKey string) bool {
 	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	kl, exists := sl.sections[aSection]
-	if !exists {
-		// section or key doesn't exist: assume successful removal
-		return true
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.RemoveKey(aKey)
 	}
 
-	return kl.RemoveKey(aKey)
+	// section or key doesn't exist: assume successful removal
+	return true
 } // RemoveSectionKey()
 
 // `Sections()` returns a list of section names in the order they
@@ -1053,9 +1053,6 @@ func (sl *TSectionList) Walk(aFunc TIniWalkFunc) {
 		}
 	}
 
-	// for _, kl := range sl.sections { // tSections map[string]*TSection
-	// 	kl.Walk(aFunc)
-	// }
 } // Walk()
 
 // `Walker()` traverses through all entries in all INI sections

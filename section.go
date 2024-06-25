@@ -30,6 +30,14 @@ type (
 	//
 	// see `Walk()`
 	TSectionWalkFunc func(aKey, aVal string)
+
+	// A `TSectionWalker` is used by `Walker()` when visiting an entry
+	// in the section's list.
+	//
+	// see `Walker()`
+	TSectionWalker interface {
+		Walk(aKey, aVal string)
+	}
 )
 
 // `AddKey()` appends a new key/value pair returning `true` on success or
@@ -611,8 +619,8 @@ func (kl *TSection) Len() int {
 //
 // Returns:
 //
-//	`TSection`: This INI section including all added/updated key/value pairs.
-func (kl *TSection) merge(aSection *TSection) *TSection {
+//	`TSection`: This section added/updated from `aSection`.
+func (kl *TSection) Merge(aSection *TSection) *TSection {
 	kl.mtx.RLock()
 	defer kl.mtx.RUnlock()
 
@@ -623,30 +631,7 @@ func (kl *TSection) merge(aSection *TSection) *TSection {
 	}
 
 	return kl
-} // merge()
-
-func (kl *TSection) merge2(aSection *TSection) *TSection {
-	kl.mtx.RLock()
-	defer kl.mtx.RUnlock()
-
-	// Strangely enough despite having no tests this implementation
-	// seems _slower_ then the one with at least three tests:
-	//
-	// goos: linux
-	// goarch: amd64
-	// pkg: github.com/mwat56/ini
-	// cpu: AMD Ryzen 9 5950X 16-Core Processor
-	// Benchmark_merge1-32    	  108182	     11898 ns/op	       0 B/op	       0 allocs/op
-	// testing: Benchmark_merge1-32 left GOMAXPROCS set to 1
-	// Benchmark_merge2-32    	  101205	     11839 ns/op	       0 B/op	       0 allocs/op
-	// testing: Benchmark_merge2-32 left GOMAXPROCS set to 1
-
-	for key, value := range aSection.data {
-		kl.data[key] = value
-	}
-
-	return kl
-} // merge()
+} // Merge()
 
 // `RemoveKey()` removes `aKey` from this section.
 //
@@ -670,12 +655,12 @@ func (kl *TSection) RemoveKey(aKey string) bool {
 	}
 
 	delete(kl.data, aKey)
-	if _, exists := kl.data[aKey]; !exists {
-		// aKey successfully removed
-		return true
+	if _, exists := kl.data[aKey]; exists {
+		return false // should never happen
 	}
 
-	return false
+	// aKey successfully removed
+	return true
 } // RemoveKey()
 
 // `String()` returns a string representation of the whole INI section.
@@ -810,34 +795,6 @@ func (kl *TSection) UpdateKeyStr(aKey, aValue string) bool {
 	return kl.UpdateKey(aKey, aValue)
 } // UpdateKeyStr()
 
-// `mergeWalker()` inserts the given key/value pair in this `TSection`.
-//
-// This method is called by the `Merge()` method.
-//
-// Parameters:
-//
-//	`aKey` The name of the key/value pair to use.
-//	`aValue` The value of the key/value pair to update.
-func (kl *TSection) mergeWalker(aKey, aValue string) {
-	kl.AddKey(aKey, aValue) // ignore the method's result
-} // mergeWalker
-
-// `Merge()` copies or merges all section key/value pairs
-// into this section.
-//
-// Parameters:
-//
-//	`aSection` The INI section to merge with this section.
-//
-// Returns:
-//
-//	`TSection` This INI section that got merged with the other one.
-func (kl *TSection) Merge(aSection *TSection) *TSection {
-	aSection.Walk(kl.mergeWalker)
-
-	return kl
-} // Merge()
-
 // `Walk()` traverses through all entries in the section calling
 // `aFunc` for each entry.
 //
@@ -849,6 +806,16 @@ func (kl *TSection) Walk(aFunc TSectionWalkFunc) {
 		aFunc(key, value)
 	}
 } // Walk()
+
+// `Walker()` traverses through all entries of current section
+// calling `aWalker` for each entry.
+//
+// Parameters:
+//
+//	`aWalker` An object implementing the `TSectionWalker` interface.
+func (kl *TSection) Walker(aWalker TSectionWalker) {
+	kl.Walk(aWalker.Walk)
+} // Walker()
 
 // utility function
 
