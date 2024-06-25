@@ -7,14 +7,19 @@ Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
 package ini
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
-// `New()` reads the given `aFilename` returning the data structure read
+// `NewIni()` reads the given `aFilename` returning the data structure read
 // from that INI file and a possible error condition.
+//
+// If `aFilename` is empty, the method returns an empty `TSectionList`
+// and a `fs.ErrNotExist`.
 //
 // This function reads one line at a time of the INI file skipping both
 // empty lines and comments (identified by '#' or ';' at line start).
@@ -25,15 +30,15 @@ import (
 //
 // Returns:
 //
-// *TSectionList: The list of sections of the INI file.
+//	*TSectionList: The list of sections of the INI file.
 //	error: A possible error condition.
-func New(aFilename string) (*TSectionList, error) {
-	result := &TSectionList{
-		defSect:  DefSection,
-		fName:    aFilename,
-		secOrder: make(tSectionOrder, 0, slDefCapacity),
-		sections: make(tSections),
+func NewIni(aFilename string) (*TSectionList, error) {
+	if aFilename = strings.TrimSpace(aFilename); "" == aFilename {
+		return NewSectionList(), fs.ErrNotExist
 	}
+
+	result := NewSectionList().SetFilename(aFilename)
+
 	return result.load()
 } // New()
 
@@ -76,13 +81,13 @@ func ReadIniData(aName string) (*TSection, *TSectionList) {
 	)
 	// (1) ./
 	fName, _ := filepath.Abs(`./` + aName + `.ini`)
-	if ini1, err = New(fName); nil == err {
+	if ini1, err = NewIni(fName); nil == err {
 		ini1.AddSectionKey("", `iniFile`, fName)
 	}
 
 	// (2) /etc/
 	fName = `/etc/` + aName + `.ini`
-	if ini2, err = New(fName); nil == err {
+	if ini2, err = NewIni(fName); nil == err {
 		ini1.Merge(ini2)
 		ini1.AddSectionKey("", `iniFile`, fName)
 	}
@@ -91,7 +96,7 @@ func ReadIniData(aName string) (*TSection, *TSectionList) {
 	fName, err = os.UserHomeDir()
 	if (nil == err) && (0 < len(fName)) {
 		fName, _ = filepath.Abs(filepath.Join(fName, `.`+aName+`.ini`))
-		if ini2, err = New(fName); nil == err {
+		if ini2, err = NewIni(fName); nil == err {
 			ini1.Merge(ini2)
 			ini1.AddSectionKey("", `iniFile`, fName)
 		}
@@ -100,7 +105,7 @@ func ReadIniData(aName string) (*TSection, *TSectionList) {
 	// (4) ~/.config/
 	if confDir, err = os.UserConfigDir(); nil == err {
 		fName, _ = filepath.Abs(filepath.Join(confDir, aName+`.ini`))
-		if ini2, err = New(fName); nil == err {
+		if ini2, err = NewIni(fName); nil == err {
 			ini1.Merge(ini2)
 			ini1.AddSectionKey("", `iniFile`, fName)
 		}
@@ -116,7 +121,7 @@ func ReadIniData(aName string) (*TSection, *TSectionList) {
 			i++
 			if i < aLen {
 				fName, _ = filepath.Abs(os.Args[i])
-				if ini2, err = New(fName); nil == err {
+				if ini2, err = NewIni(fName); nil == err {
 					ini1.Merge(ini2)
 					ini1.AddSectionKey("", `iniFile`, fName)
 				}

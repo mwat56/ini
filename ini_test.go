@@ -7,6 +7,7 @@ Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
 package ini
 
 import (
+	"runtime"
 	"testing"
 )
 
@@ -15,7 +16,9 @@ import (
 const cmpstring = "qwertzuiopü+#äölkjhgfdsa<yxcvbnm,.-^1234567890ß´qwertzuiop"
 
 func Benchmark_compare1(b *testing.B) {
-	for n := 0; n < b.N*8; n++ {
+	runtime.GOMAXPROCS(1)
+
+	for n := 0; n < b.N<<5; n++ {
 		if "" == cmpstring {
 			continue
 		}
@@ -23,7 +26,9 @@ func Benchmark_compare1(b *testing.B) {
 } // Benchmark_compare1()
 
 func Benchmark_compare2(b *testing.B) {
-	for n := 0; n < b.N*8; n++ {
+	runtime.GOMAXPROCS(1)
+
+	for n := 0; n < b.N<<5; n++ {
 		if 0 == len(cmpstring) {
 			continue
 		}

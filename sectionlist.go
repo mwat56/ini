@@ -6,8 +6,6 @@ Copyright © 2019, 2024  M.Watermann, 10247 Berlin, Germany
 */
 package ini
 
-//lint:file-ignore ST1017 - I prefer Yoda conditions
-
 import (
 	"bufio"
 	"fmt"
@@ -34,11 +32,11 @@ type (
 		sections tSections     // list of INI sections
 	}
 
-	// `TWalkFunc()` is used by `Walk()` when visiting an entry
+	// `TIniWalkFunc()` is used by `Walk()` when visiting an entry
 	// in the INI list.
 	//
 	// see `Walk()`
-	TWalkFunc func(aSection, aKey, aVal string)
+	TIniWalkFunc func(aSection, aKey, aVal string)
 
 	// A `TIniWalker` is used by `Walker()` when visiting an entry
 	// in the INI list.
@@ -106,22 +104,21 @@ func removeQuotes(aString string) (rString string) {
 // Parameters:
 //
 //	`aSection` The name of the INI section to add.
-func (sl *TSectionList) addSection(aSection string) bool {
-	if _, exists := sl.sections[aSection]; exists {
-		return true // already there: nothing more to do
+func (sl *TSectionList) addSection(aSection string) (rOK bool) {
+	if _, rOK = sl.sections[aSection]; rOK {
+		return // already there: nothing more to do
 	}
 
-	// we make room for initially 16 key/value pairs
-	sect := make(TSection, 0, slDefCapacity)
-	sl.sections[aSection] = &sect
-	if _, ok := sl.sections[aSection]; ok {
+	sl.sections[aSection] = NewSection()
+	if _, rOK = sl.sections[aSection]; rOK {
 		// add new section name to order list
 		sl.secOrder = append(sl.secOrder, aSection)
 
-		return true
+		// just to be safe:
+		_, rOK = sl.sections[aSection]
 	}
 
-	return false
+	return
 } // addSection()
 
 // `AddSectionKey()` appends a new key/value pair to `aSection`
@@ -132,19 +129,30 @@ func (sl *TSectionList) addSection(aSection string) bool {
 //	`aSection` The name of the INI section to use.
 //	`aKey` The key of the key/value pair to add.
 //	`aValue` The value of the key/value pair to add.
-func (sl *TSectionList) AddSectionKey(aSection, aKey, aValue string) bool {
-	if "" == aSection {
+//
+// Returns:
+//
+//	bool `true` on success, of `false` if either `aKey` is empty, or
+//
+// `aSection` can't be found or added.
+func (sl *TSectionList) AddSectionKey(aSection, aKey, aValue string) (rOK bool) {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if ok := sl.addSection(aSection); !ok {
-		return false // can't find nor add the section
+
+	if rOK = sl.addSection(aSection); !rOK {
+		return // can't find nor add the section
 	}
 
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AddKey(aKey, aValue)
+	if kl, exists := sl.sections[aSection]; exists {
+		rOK = kl.AddKey(aKey, aValue)
 	}
 
-	return false
+	return
 } // AddSectionKey()
 
 /*
@@ -170,11 +178,16 @@ func (sl *TSectionList) AddSectionKey(aSection, aKey, aValue string) bool {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsBool(aSection, aKey string) (bool, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return false, false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsBool(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsBool(aKey)
 	}
 
 	return false, false
@@ -196,15 +209,20 @@ func (sl *TSectionList) AsBool(aSection, aKey string) (bool, bool) {
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (sl *TSectionList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool) {
-	if "" == aSection {
-		aSection = sl.defSect
-	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsFloat32(aKey)
+func (sl *TSectionList) AsFloat32(aSection, aKey string) (float32, bool) {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return float32(0), false
 	}
 
-	return
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
+		aSection = sl.defSect
+	}
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsFloat32(aKey)
+	}
+
+	return float32(0), false
 } // AsFloat32()
 
 // `AsFloat64` returns the value of `aKey` in `aSection` as a 64bit
@@ -221,15 +239,20 @@ func (sl *TSectionList) AsFloat32(aSection, aKey string) (rVal float32, rOK bool
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (sl *TSectionList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool) {
-	if "" == aSection {
-		aSection = sl.defSect
-	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsFloat64(aKey)
+func (sl *TSectionList) AsFloat64(aSection, aKey string) (float64, bool) {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return float64(0), false
 	}
 
-	return
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
+		aSection = sl.defSect
+	}
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsFloat64(aKey)
+	}
+
+	return float64(0), false
 } // AsFloat64()
 
 // Int
@@ -244,11 +267,16 @@ func (sl *TSectionList) AsFloat64(aSection, aKey string) (rVal float64, rOK bool
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsInt(aSection, aKey string) (int, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return int(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsInt(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsInt(aKey)
 	}
 
 	return int(0), false
@@ -264,11 +292,16 @@ func (sl *TSectionList) AsInt(aSection, aKey string) (int, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsInt8(aSection, aKey string) (int8, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return int8(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsInt8(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsInt8(aKey)
 	}
 
 	return int8(0), false
@@ -284,11 +317,16 @@ func (sl *TSectionList) AsInt8(aSection, aKey string) (int8, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsInt16(aSection, aKey string) (int16, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return int16(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsInt16(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsInt16(aKey)
 	}
 
 	return int16(0), false
@@ -304,11 +342,16 @@ func (sl *TSectionList) AsInt16(aSection, aKey string) (int16, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsInt32(aSection, aKey string) (int32, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return int32(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsInt32(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsInt32(aKey)
 	}
 
 	return int32(0), false
@@ -324,11 +367,16 @@ func (sl *TSectionList) AsInt32(aSection, aKey string) (int32, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsInt64(aSection, aKey string) (int64, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return int64(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsInt64(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsInt64(aKey)
 	}
 
 	return int64(0), false
@@ -346,11 +394,16 @@ func (sl *TSectionList) AsInt64(aSection, aKey string) (int64, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsString(aSection, aKey string) (string, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return "", false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsString(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsString(aKey)
 	}
 
 	return "", false
@@ -368,11 +421,16 @@ func (sl *TSectionList) AsString(aSection, aKey string) (string, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsUInt(aSection, aKey string) (uint, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return uint(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsUInt(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsUInt(aKey)
 	}
 
 	return uint(0), false
@@ -388,11 +446,16 @@ func (sl *TSectionList) AsUInt(aSection, aKey string) (uint, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsUInt8(aSection, aKey string) (uint8, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return uint8(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsUInt8(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsUInt8(aKey)
 	}
 
 	return uint8(0), false
@@ -408,11 +471,16 @@ func (sl *TSectionList) AsUInt8(aSection, aKey string) (uint8, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsUInt16(aSection, aKey string) (uint16, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return uint16(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsUInt16(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsUInt16(aKey)
 	}
 
 	return uint16(0), false
@@ -427,12 +495,17 @@ func (sl *TSectionList) AsUInt16(aSection, aKey string) (uint16, bool) {
 //
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
-func (sl *TSectionList) AUInt32(aSection, aKey string) (uint32, bool) {
-	if "" == aSection {
+func (sl *TSectionList) AsUInt32(aSection, aKey string) (uint32, bool) {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return uint32(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsUInt32(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsUInt32(aKey)
 	}
 
 	return uint32(0), false
@@ -449,11 +522,16 @@ func (sl *TSectionList) AUInt32(aSection, aKey string) (uint32, bool) {
 //	`aSection` the name of the INI section to lookup.
 //	`aKey` The name of the key to lookup.
 func (sl *TSectionList) AsUInt64(aSection, aKey string) (uint64, bool) {
-	if "" == aSection {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
+		return uint64(0), false
+	}
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.AsUInt64(aKey)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.AsUInt64(aKey)
 	}
 
 	return uint64(0), false
@@ -473,8 +551,8 @@ func (sl *TSectionList) Clear() *TSectionList {
 	// we leave `defSect` alone for now
 	sl.secOrder = make(tSectionOrder, 0, slDefCapacity)
 	for name := range sl.sections {
-		if cs, exists := sl.sections[name]; exists {
-			cs.Clear()
+		if kl, exists := sl.sections[name]; exists {
+			kl.Clear()
 		}
 		delete(sl.sections, name)
 	}
@@ -482,6 +560,42 @@ func (sl *TSectionList) Clear() *TSectionList {
 
 	return sl
 } // Clear()
+
+// `CompareTo()` compares the current `TSectionList` with another
+// `TSectionList`.
+// It checks if both lists have the same number of sections and if each
+// section in the current list has the same keys and values as in the
+// other list.
+//
+// Parameters:
+//
+//	`aINI`: The `TSectionList` to compare with the current one.
+//
+// Returns:
+//
+//	bool: true if both lists are equal, false otherwise.
+func (sl *TSectionList) CompareTo(aINI *TSectionList) bool {
+	// Check if both lists have the same number of sections
+	if len(sl.sections) != len(aINI.sections) {
+		return false
+	}
+
+	// Iterate over each section in the current list
+	for name, kl := range sl.sections {
+		// Check if the other list has the same section
+		section, exists := aINI.sections[name]
+		if !exists {
+			return false
+		}
+		// Compare the keys and values of the sections
+		if !kl.CompareTo(section) {
+			return false
+		}
+	}
+
+	// If all checks passed, the lists are equal
+	return true
+} // CompareTo()
 
 // `Filename()` returns the configured filename of the INI file.
 func (sl *TSectionList) Filename() string {
@@ -511,7 +625,7 @@ func (sl *TSectionList) GetSection(aSection string) *TSection {
 //
 //	`aSection` is the name of the INI section to lookup.
 func (sl *TSectionList) HasSection(aSection string) (rOK bool) {
-	if "" == aSection {
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		_, rOK = sl.sections[sl.defSect]
 	} else {
 		_, rOK = sl.sections[aSection]
@@ -528,14 +642,14 @@ func (sl *TSectionList) HasSection(aSection string) (rOK bool) {
 //	`aSection` The INI section to lookup.
 //	`aKey` The key name to lookup in `aSection`.
 func (sl *TSectionList) HasSectionKey(aSection, aKey string) bool {
-	if "" == aKey {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
 		return false
 	}
-	if "" == aSection {
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, ok := sl.sections[aSection]; ok {
-		return cs.HasKey(aKey)
+	if kl, ok := sl.sections[aSection]; ok {
+		return kl.HasKey(aKey)
 	}
 
 	return false
@@ -597,9 +711,11 @@ func (sl *TSectionList) mergeWalker(aSection, aKey, aValue string) {
 //
 // Returns:
 //
-//	`aINI` The INI list to merge with this one.
+//	`TSectionList` This sections list merged with the other one.
 func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
-	aINI.Walk(sl.mergeWalker)
+	if nil != aINI {
+		aINI.Walk(sl.mergeWalker)
+	}
 
 	return sl
 } // Merge()
@@ -621,8 +737,8 @@ func (sl *TSectionList) Merge(aINI *TSectionList) *TSectionList {
 //
 // Returns:
 //
-//	`rRead`: The number of bytes read from the INI file.
-//	`rErr`:  A possible error condition.
+//	int: The number of bytes read from the INI file.
+//	error: A possible error condition.
 func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 	var lastLine string
 	section := sl.defSect
@@ -687,20 +803,17 @@ func (sl *TSectionList) read(aScanner *bufio.Scanner) (rRead int, rErr error) {
 //
 //	bool: `true` on success, `false` on failure.
 func (sl *TSectionList) RemoveSection(aSection string) bool {
-	if "" == aSection {
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	_, exists := sl.sections[aSection]
-	if !exists {
-		// section doesn't exist which satisfies the removal wish
+	if _, exists := sl.sections[aSection]; !exists {
+		// section doesn't exist which satisfies the removal request
 		return true
 	}
 
 	delete(sl.sections, aSection)
-	if 0 < len(sl.sections) {
-		if _, exists = sl.sections[aSection]; exists {
-			return false // this should never happen!
-		}
+	if _, exists := sl.sections[aSection]; exists {
+		return false // this should never happen!
 	}
 
 	// len - 1: because list is zero-based
@@ -753,16 +866,20 @@ func (sl *TSectionList) RemoveSection(aSection string) bool {
 //
 //	bool: `true` on success, `false` on failure.
 func (sl *TSectionList) RemoveSectionKey(aSection, aKey string) bool {
-	if "" == aSection {
-		aSection = sl.defSect
-	}
-	cs, exists := sl.sections[aSection]
-	if (!exists) || ("" == aKey) {
-		// section or key doesn't exist
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
 		return true
 	}
 
-	return cs.RemoveKey(aKey)
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
+		aSection = sl.defSect
+	}
+	kl, exists := sl.sections[aSection]
+	if !exists {
+		// section or key doesn't exist: assume successful removal
+		return true
+	}
+
+	return kl.RemoveKey(aKey)
 } // RemoveSectionKey()
 
 // `Sections()` returns a list of section names in the order they
@@ -804,67 +921,59 @@ func (sl *TSectionList) Store() (int, error) {
 	return file.Write([]byte(sl.String()))
 } // Store()
 
-// String() returns a string representation of the INI section list.
+// `String()` returns a string representation of the INI section list.
+//
+// NOTE: Since the order of the key/value pairs isn't guaranteed
+// the method's result may vary between different calls.
 func (sl *TSectionList) String() (rString string) {
 	// use the secOrder list to determine the order of sections
 	for _, name := range sl.secOrder {
-		if "" == name {
-			name = sl.defSect
-		}
-		if cs, exists := sl.sections[name]; exists {
-			rString += "\n[" + name + "]\n" + cs.String()
+		if kl, exists := sl.sections[name]; exists {
+			rString += "\n[" + name + "]\n" + kl.String()
 		}
 	}
 
 	return
 } // String()
 
-// // String() returns a string representation of the INI section list.
-// func (sl *TSectionList) String2() (rString string) {
-// 	var sb strings.Builder
-// 	// use the secOrder list to determine the order of sections
-// 	for _, name := range sl.secOrder {
-// 		if "" == name) {
-// 			name = sl.defSect
-// 		}
-// 		if cs, exists := sl.sections[name]; exists {
-// 			// ignore return values
-// 			_, _ = sb.WriteString(fmt.Sprintf("\n[%s]\n%s",
-// 				name, cs.String2()))
-// 		}
-// 	}
-
-// 	return sb.String()
-// } // String2()
-
-// `updateSectKey()` replaces the current value of `aKey` in `aSection`
+// `updateSectKey()` updates the current value of `aKey` in `aSection`
 // by the provided new `aValue`.
 //
 // Private method used by the UpdateSectKeyXXX() methods.
 //
+// Parameters:
+//
 //	`aSection` The name of the INI section to lookup.
-//	`aKey` The name of the key/value pair to use.
-//	`aValue` The value of the key/value pair to update.
+//	`aKey`     The name of the key/value pair to use.
+//	`aValue`   The value of the key/value pair to update.
+//
+// Returns:
+//
+//	bool: `true` if the key/value pair was successfully updated,
+//
+// `false` otherwise.
 func (sl *TSectionList) updateSectKey(aSection, aKey, aValue string) bool {
-	if "" == aKey {
+	if aKey = strings.TrimSpace(aKey); "" == aKey {
 		return false
 	}
-	if "" == aSection {
+
+	if aSection = strings.TrimSpace(aSection); "" == aSection {
 		aSection = sl.defSect
 	}
-	if cs, exists := sl.sections[aSection]; exists {
-		return cs.UpdateKey(aKey, aValue)
+
+	if kl, exists := sl.sections[aSection]; exists {
+		return kl.UpdateKey(aKey, aValue)
 	}
 
-	// if `aSection` or `aKey` doesn't exist we create a new entry
+	// if `aSection` doesn't exist we create a new entry
 	return sl.AddSectionKey(aSection, aKey, aValue)
 } // updateSectKey()
 
 // `UpdateSectKeyBool()` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` boolean.
 //
-// If the given `aValue` is `true` then the string "true" is used
-// otherwise the string "false".
+// If the given `aValue` is `true` then the string "True" is used
+// otherwise the string "False".
 //
 // Parameters:
 //
@@ -873,13 +982,13 @@ func (sl *TSectionList) updateSectKey(aSection, aKey, aValue string) bool {
 //	`aValue` The boolean value of the key/value pair to update.
 func (sl *TSectionList) UpdateSectKeyBool(aSection, aKey string, aValue bool) bool {
 	if aValue {
-		return sl.updateSectKey(aSection, aKey, `true`)
+		return sl.updateSectKey(aSection, aKey, `True`)
 	}
 
-	return sl.updateSectKey(aSection, aKey, `false`)
+	return sl.updateSectKey(aSection, aKey, `False`)
 } // UpdateSectKeyBool()
 
-// `UpdateSectKeyFloat()` replaces the current value of aKey in `aSection`
+// `UpdateSectKeyFloat()` replaces the current value of `aKey` in `aSection`
 // by the provided new `aValue` float.
 //
 // Parameters:
@@ -924,8 +1033,10 @@ func (sl *TSectionList) UpdateSectKeyUInt(aSection, aKey string, aValue uint64) 
 //	`aKey` The name of the key/value pair to use.
 //	`aValue` The string value of the key/value pair to update.
 func (sl *TSectionList) UpdateSectKeyStr(aSection, aKey, aValue string) bool {
-	return sl.updateSectKey(aSection, aKey, strings.TrimSpace(aValue))
+	return sl.updateSectKey(aSection, aKey, aValue)
 } // UpdateSectKeyStr()
+
+// ----------------------------------------------------------------
 
 // `Walk()` traverses through all entries in the INI list sections calling
 // `aFunc` for each entry.
@@ -933,21 +1044,21 @@ func (sl *TSectionList) UpdateSectKeyStr(aSection, aKey, aValue string) bool {
 // Parameters:
 //
 //	`aFunc` The function called for each key/value pair in all sections.
-func (sl *TSectionList) Walk(aFunc TWalkFunc) {
+func (sl *TSectionList) Walk(aFunc TIniWalkFunc) {
 	// We ignore the `secOrder` list because the
 	// order of sections doesn't matter here.
-	for section := range sl.sections {
-		if "" == section {
-			section = sl.defSect
-		}
-		cs := sl.sections[section]
-		for _, kv := range *cs {
-			aFunc(section, kv.Key, kv.Value)
+	for name, kl := range sl.sections {
+		for key, value := range kl.data {
+			aFunc(name, key, value)
 		}
 	}
+
+	// for _, kl := range sl.sections { // tSections map[string]*TSection
+	// 	kl.Walk(aFunc)
+	// }
 } // Walk()
 
-// `Walker()` traverses through all entries in the INI list sections
+// `Walker()` traverses through all entries in all INI sections
 // calling `aWalker` for each entry.
 //
 // Parameters:
@@ -956,5 +1067,22 @@ func (sl *TSectionList) Walk(aFunc TWalkFunc) {
 func (sl *TSectionList) Walker(aWalker TIniWalker) {
 	sl.Walk(aWalker.Walk)
 } // Walker()
+
+// ----------------------------------------------------------------
+
+// `NewSectionList()` creates a new instance of the `TSectionList`.
+//
+// This method initializes a new `TSectionList` instance with the default section name.
+//
+// Returns:
+//
+//	*TSectionList: A new instance of the `TSectionList`.
+func NewSectionList() *TSectionList {
+	return &TSectionList{
+		defSect:  DefSection,
+		secOrder: make(tSectionOrder, 0, slDefCapacity),
+		sections: make(tSections),
+	}
+} // NewSectionList()
 
 /* _EoF_ */
