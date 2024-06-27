@@ -23,10 +23,10 @@ const (
 func prepSectionList() *TSectionList {
 	sl := NewSectionList()
 	sl.AddSectionKey("", "key0", "")
-	sl.AddSectionKey("s1", "bool", "nada")
 	sl.AddSectionKey("s2", "float", "12345.6789")
-	sl.AddSectionKey("s3", "int", "-12345")
+	sl.AddSectionKey("s1", "bool", "nada")
 	sl.AddSectionKey("s4", "uint", "1234567890")
+	sl.AddSectionKey("s3", "int", "-12345")
 
 	return sl
 } // prepSectionList()
@@ -904,10 +904,10 @@ func TestTSectionList_RemoveSection(t *testing.T) {
 		args string
 		want bool
 	}{
-		{"1", DefSection, true}, // first
-		{"2", "s4", true},       // last
-		{"3", "s2", true},       // middle
-		{"4", "n.a.", true},     // n.a.
+		{"1", "", true},     // first
+		{"2", "s4", true},   // last
+		{"3", "s2", true},   // middle
+		{"4", "n.a.", true}, // n.a.
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -962,14 +962,14 @@ func TestTSectionList_Sections(t *testing.T) {
 		want  []string
 		want1 int
 	}{
-		{"1", []string{DefSection, "s1", "s2", "s3", "s4"}, 5},
+		{"1", []string{DefSection, "s2", "s1", "s4", "s3"}, 5},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := sl.Sections()
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("%q: TSectionList.Sections() got = %v, want %v",
+				t.Errorf("%q: TSectionList.Sections() got = {\n%v},\nwant {\n%v}",
 					tt.name, got, tt.want)
 			}
 			if got1 != tt.want1 {
@@ -999,6 +999,26 @@ func TestTSectionList_SetFilename(t *testing.T) {
 		})
 	}
 } // TestTSectionList_SetFilename()
+
+func TestTSectionList_Sort(t *testing.T) {
+	sl := prepSectionList()
+	wl := prepSectionList().Sort()
+	tests := []struct {
+		name string
+		want *TSectionList
+	}{
+		{"1", wl},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sl.Sort(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("%q: TSectionList.Sort() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // TestTSectionList_Sort()
 
 func TestTSectionList_String(t *testing.T) {
 	//NOTE: Since the order of the key/value pairs is not guaranteed

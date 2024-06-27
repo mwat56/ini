@@ -10,25 +10,115 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"testing"
 )
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
+
+func prepKeyValList() *tKeyValList {
+	kvl := &tKeyValList{
+		tKeyVal{"bool", "b"},
+		tKeyVal{"float", "f"},
+		tKeyVal{"int", "i"},
+		tKeyVal{"key0", "k"},
+		tKeyVal{"uint", "u"},
+	}
+
+	return kvl
+} // prepKeyValList()
+
+func Test_tKeyValList_insert(t *testing.T) {
+	s := prepKeyValList()
+
+	tests := []struct {
+		name string
+		args tKeyVal
+		want bool
+	}{
+		{"0", tKeyVal{"", "v0"}, false},     // empty key
+		{"1", tKeyVal{"k 1", "v 1"}, true},  // insert
+		{"2", tKeyVal{"int", "1234"}, true}, // update
+		{"3", tKeyVal{"zero", "Z"}, true},   // add
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := s.insert(tt.args); got != tt.want {
+				t.Errorf("%q: tKeyValList.insert() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // Test_tKeyValList_insert()
+
+func Test_tKeyValList_isKeyInList(t *testing.T) {
+	s := prepKeyValList()
+
+	tests := []struct {
+		name string
+		key  string
+		want int
+	}{
+		{"0", "", -1},
+		{"1", "key0", 3},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := s.isKeyInList(tt.key); got != tt.want {
+				t.Errorf("%q: tKeyValList.isKeyInList() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // Test_tKeyValList_isKeyInList()
+
+func Test_tKeyValList_value(t *testing.T) {
+	s := prepKeyValList()
+
+	tests := []struct {
+		name  string
+		key   string
+		val   string
+		want1 bool
+	}{
+		{"0", "", "", false},
+		{"1", "int", "i", true},
+		{"2", "n.a.", "", false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := s.value(tt.key)
+			if got != tt.val {
+				t.Errorf("%q: tKeyValList.value() got = %q, want %q",
+					tt.name, got, tt.val)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("%q: tKeyValList.value() got1 = %v, want %v",
+					tt.name, got1, tt.want1)
+			}
+		})
+	}
+} // Test_tKeyValList_value()
+
+// --------------------------------------------------------------------------
 
 func prepSection() *TSection {
 	kl := NewSection()
 	_ = kl.AddKey("key0", "")
 	_ = kl.AddKey("bool", "")
 	_ = kl.AddKey("float", "")
-	_ = kl.AddKey("int", "")
 	_ = kl.AddKey("uint", "")
+	_ = kl.AddKey("int", "")
 
 	return kl
 } // prepSection()
 
 func TestNewSection(t *testing.T) {
 	kl := &TSection{
-		data: make(map[string]string),
+		data: make(tKeyValList, 0, kvDefCapacity),
 	}
 	tests := []struct {
 		name string
@@ -74,7 +164,7 @@ func TestTSection_AddKey(t *testing.T) {
 } // TestTSection_AddKey()
 
 func TestTSection_AsBool(t *testing.T) {
-	kl := prepSection()
+	kl := NewSection()
 	_ = kl.AddKey("key0", "0")
 	_ = kl.AddKey("key1", "1")
 	_ = kl.AddKey("key2", "2")
@@ -86,6 +176,7 @@ func TestTSection_AsBool(t *testing.T) {
 		want  bool
 		want1 bool
 	}{
+		{"", false, false},
 		{"bool", false, false},
 		{"key0", false, true},
 		{"key1", true, true},
@@ -751,6 +842,34 @@ func TestTSection_RemoveKey(t *testing.T) {
 		})
 	}
 } // TestTSection_RemoveKey()
+
+func TestTSection_Sort(t *testing.T) {
+	runtime.GOMAXPROCS(1)
+	kl := prepSection()
+	wl := NewSection()
+	_ = wl.AddKey("bool", "b")
+	_ = wl.AddKey("float", "f")
+	_ = wl.AddKey("key0", "k")
+	_ = wl.AddKey("int", "i")
+	_ = wl.AddKey("uint", "u")
+	wl = kl.Sort()
+
+	tests := []struct {
+		name string
+		want *TSection
+	}{
+		{"1", wl},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := kl.Sort(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("%q: TSection.Sort() = {\n%v}, want {\n%v}",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // TestTSection_Sort()
 
 func TestTSection_String(t *testing.T) {
 	//NOTE: Since the order of the key/value pairs is not guaranteed
