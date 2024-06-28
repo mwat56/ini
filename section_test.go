@@ -28,6 +28,29 @@ func prepKeyValList() *tKeyValList {
 	return kvl
 } // prepKeyValList()
 
+func Test_tKeyValList_hasKey(t *testing.T) {
+	s := prepKeyValList()
+
+	tests := []struct {
+		name string
+		key  string
+		want bool
+	}{
+		{"0", "", false},
+		{"1", "int", true},
+		{"2", "key2", false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := s.hasKey(tt.key); got != tt.want {
+				t.Errorf("%q: tKeyValList.hasKey() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // TestTKeyValList_hasKey()
+
 func Test_tKeyValList_insert(t *testing.T) {
 	s := prepKeyValList()
 
@@ -73,6 +96,33 @@ func Test_tKeyValList_isKeyInList(t *testing.T) {
 		})
 	}
 } // Test_tKeyValList_isKeyInList()
+
+func Test_tKeyValList_remove(t *testing.T) {
+	s := prepKeyValList()
+
+	tests := []struct {
+		name string
+		key  string
+		want bool
+	}{
+		{"0", "", false},
+		{"1", "bool", true}, // first
+		{"2", "bool", false},
+		{"3", "uint", true}, // last
+		{"4", "uint", false},
+		{"5", "int", true}, // middle
+		{"6", "int", false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := s.remove(tt.key); got != tt.want {
+				t.Errorf("%q: tKeyValList.remove() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // Test_tKeyValList_remove()
 
 func Test_tKeyValList_value(t *testing.T) {
 	s := prepKeyValList()

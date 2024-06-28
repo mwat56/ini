@@ -53,6 +53,23 @@ type (
 
 // --------------------------------------------------------------------------
 
+// `hasKey()` checks if a given key exists in the list.
+//
+// Parameters:
+// - `aKey` string: The key to search for in the list.
+//
+// Returns:
+// - `bool`: `true` if the key is found in the list, or `false` otherwise.
+func (s tKeyValList) hasKey(aKey string) bool {
+	for _, entry := range s {
+		if aKey == entry.Key {
+			return true
+		}
+	}
+
+	return false
+} // hasKey()
+
 // `insert()` inserts a new key/value pair returning `true` on success or
 // `false` otherwise.
 //
@@ -106,6 +123,24 @@ func (s tKeyValList) isKeyInList(aKey string) int {
 	return -1
 } // isKeyInList()
 
+// `remove()` deletes `aKey` in the list of key/value pairs.
+//
+// Parameters:
+// - `aKey` string: The name of the key to remove.
+//
+// Returns:
+// - `bool`: `true` if the `aKey` is found/removed, or `false` otherwise.
+func (s *tKeyValList) remove(aKey string) bool {
+	for idx, entry := range *s {
+		if aKey == entry.Key {
+			(*s) = append((*s)[:idx], (*s)[idx+1:]...)
+			return true
+		}
+	}
+
+	return false
+} // remove()
+
 // `value()` returns the value of `aKey` as a string.
 //
 // If the given `aKey` doesn't exist then the second return value
@@ -125,7 +160,7 @@ func (s tKeyValList) value(aKey string) (string, bool) {
 	}
 
 	return "", false
-} // value(aKey)
+} // value()
 
 // --------------------------------------------------------------------------
 
@@ -644,8 +679,10 @@ func (kl *TSection) HasKey(aKey string) bool {
 	if aKey = strings.TrimSpace(aKey); "" == aKey {
 		return false
 	}
+	kl.mtx.RLock()
+	defer kl.mtx.RUnlock()
 
-	return -1 < kl.data.isKeyInList(aKey)
+	return kl.data.hasKey(aKey)
 } // HasKey()
 
 // `Len()` counts the number of key/value pairs in this section.
@@ -691,14 +728,12 @@ func (kl *TSection) RemoveKey(aKey string) bool {
 	kl.mtx.Lock()
 	defer kl.mtx.Unlock()
 
-	idx := kl.data.isKeyInList(aKey)
-	if 0 > idx {
-		// if aKey doesn't exist we consider the removal successful
+	if kl.data.remove(aKey) {
 		return true
 	}
 
-	kl.data = append(kl.data[:idx], kl.data[idx+1:]...)
-	return (0 > kl.data.isKeyInList(aKey))
+	// `aKey` not found is considered removed
+	return true
 } // RemoveKey()
 
 // `Sort()` sorts the key/value pairs in the section alphabetically by key.
