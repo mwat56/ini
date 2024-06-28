@@ -102,27 +102,6 @@ func (s *tKeyValList) insert(aKeyVal tKeyVal) bool {
 	return true
 } // insert()
 
-// `isKeyInList()` returns the index of the given `aKey` in the list
-// of key/value pairs.
-//
-// If `aKey` does not exist in the list, the method's result will be -1.
-//
-// Parameters:
-// - `aKey` The name of the key to lookup.
-//
-// Returns:
-// - `int`: The index of the given `aKey` in the list of key-value pairs,
-// or -1 if `aKey` does not exist.
-func (s tKeyValList) isKeyInList(aKey string) int {
-	for idx, entry := range s {
-		if aKey == entry.Key {
-			return idx
-		}
-	}
-
-	return -1
-} // isKeyInList()
-
 // `remove()` deletes `aKey` in the list of key/value pairs.
 //
 // Parameters:

@@ -75,28 +75,6 @@ func Test_tKeyValList_insert(t *testing.T) {
 	}
 } // Test_tKeyValList_insert()
 
-func Test_tKeyValList_isKeyInList(t *testing.T) {
-	s := prepKeyValList()
-
-	tests := []struct {
-		name string
-		key  string
-		want int
-	}{
-		{"0", "", -1},
-		{"1", "key0", 3},
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := s.isKeyInList(tt.key); got != tt.want {
-				t.Errorf("%q: tKeyValList.isKeyInList() = %v, want %v",
-					tt.name, got, tt.want)
-			}
-		})
-	}
-} // Test_tKeyValList_isKeyInList()
-
 func Test_tKeyValList_remove(t *testing.T) {
 	s := prepKeyValList()
 
