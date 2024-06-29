@@ -28,8 +28,63 @@ func prepKeyValList() *tKeyValList {
 	return kvl
 } // prepKeyValList()
 
+func Test_tKeyValList_compareTo(t *testing.T) {
+	kvl := prepKeyValList()
+
+	kv1 := prepKeyValList()
+
+	kv2 := prepKeyValList()
+	_ = kv2.insert(tKeyVal{"key2", "2"})
+
+	kv3 := prepKeyValList()
+	_ = kv3.remove("key0")
+
+	tests := []struct {
+		name string
+		kvl  *tKeyValList
+		want bool
+	}{
+		{"1", kv1, true},
+		{"2", kv2, false},
+		{"3", kv3, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := kvl.compareTo(tt.kvl); got != tt.want {
+				t.Errorf("t%q: KeyValList.compareTo() = %v, want %v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // Test_tKeyValList_compareTo()
+
+func Test_tKeyValList_copy(t *testing.T) {
+	kv1 := prepKeyValList()
+	kv2 := prepKeyValList()
+	_ = kv2.insert(tKeyVal{"key2", "2"})
+
+	tests := []struct {
+		name string
+		kvl  *tKeyValList
+		want *tKeyValList
+	}{
+		{"1", kv1, kv1},
+		{"2", kv2, kv2},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.kvl.copy(); !got.compareTo(tt.want) {
+				t.Errorf("%q: tKeyValList.copy() =\n%v,\n>>>> want >>>>\n%v",
+					tt.name, got, tt.want)
+			}
+		})
+	}
+} // Test_tKeyValList_copy()
+
 func Test_tKeyValList_hasKey(t *testing.T) {
-	s := prepKeyValList()
+	kvl := prepKeyValList()
 
 	tests := []struct {
 		name string
@@ -43,7 +98,7 @@ func Test_tKeyValList_hasKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := s.hasKey(tt.key); got != tt.want {
+			if got := kvl.hasKey(tt.key); got != tt.want {
 				t.Errorf("%q: tKeyValList.hasKey() = %v, want %v",
 					tt.name, got, tt.want)
 			}
@@ -52,11 +107,11 @@ func Test_tKeyValList_hasKey(t *testing.T) {
 } // TestTKeyValList_hasKey()
 
 func Test_tKeyValList_insert(t *testing.T) {
-	s := prepKeyValList()
+	kvl := prepKeyValList()
 
 	tests := []struct {
 		name string
-		args tKeyVal
+		kvl  tKeyVal
 		want bool
 	}{
 		{"0", tKeyVal{"", "v0"}, false},     // empty key
@@ -67,13 +122,48 @@ func Test_tKeyValList_insert(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := s.insert(tt.args); got != tt.want {
+			if got := kvl.insert(tt.kvl); got != tt.want {
 				t.Errorf("%q: tKeyValList.insert() = %v, want %v",
 					tt.name, got, tt.want)
 			}
 		})
 	}
 } // Test_tKeyValList_insert()
+
+func Test_tKeyValList_merge(t *testing.T) {
+	kvl := prepKeyValList()
+
+	kv1 := prepKeyValList()
+
+	kv2 := prepKeyValList()
+	_ = kv2.insert(tKeyVal{"key2", "2"})
+
+	kv3 := prepKeyValList()
+	_ = kv3.insert(tKeyVal{"key3", "3"})
+
+	tests := []struct {
+		name  string
+		kvl   *tKeyValList
+		want  *tKeyValList
+		equal bool
+	}{
+		{"0", kvl, kvl, true},
+		{"1", kv1, kvl, true},
+		{"2", kv2, kv1, false},
+		{"3", kv3, kv2, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := kvl.merge(tt.kvl); !got.compareTo(tt.want) {
+				if tt.equal {
+					t.Errorf("%q: tKeyValList.merge() = %v,\n>>>> want >>>>\n%v",
+						tt.name, got, tt.want)
+				}
+			}
+		})
+	}
+} // tKeyValList_merge()
 
 func Test_tKeyValList_remove(t *testing.T) {
 	s := prepKeyValList()
@@ -103,7 +193,7 @@ func Test_tKeyValList_remove(t *testing.T) {
 } // Test_tKeyValList_remove()
 
 func Test_tKeyValList_value(t *testing.T) {
-	s := prepKeyValList()
+	kvl := prepKeyValList()
 
 	tests := []struct {
 		name  string
@@ -118,7 +208,7 @@ func Test_tKeyValList_value(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := s.value(tt.key)
+			got, got1 := kvl.value(tt.key)
 			if got != tt.val {
 				t.Errorf("%q: tKeyValList.value() got = %q, want %q",
 					tt.name, got, tt.val)
@@ -766,6 +856,37 @@ func TestTSection_CompareTo(t *testing.T) {
 	}
 } // TestTSection_CompareTo()
 
+func TestTSection_Copy(t *testing.T) {
+	kl := prepSection()
+
+	kl1 := prepSection()
+	_ = kl1.RemoveKey("key0")
+
+	kl2 := prepSection()
+	_ = kl2.AddKey("key2", "val2")
+
+	tests := []struct {
+		name  string
+		want  *TSection
+		equal bool
+	}{
+		{"0", kl, true},
+		{"1", kl1, false},
+		{"2", kl2, false},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := kl.Copy(); !got.CompareTo(tt.want) {
+				if tt.equal {
+					t.Errorf("%q: TSection.Copy() = {\n%v},\n>>>> want >>>> {\n%v}",
+						tt.name, got, tt.want)
+				}
+			}
+		})
+	}
+} // TestTSection_Copy()
+
 func TestTSection_HasKey(t *testing.T) {
 	kl := prepSection()
 
@@ -817,31 +938,40 @@ func TestTSection_Len(t *testing.T) {
 
 func TestTSection_Merge(t *testing.T) {
 	kl := prepSection()
+
+	kl1 := prepSection()
+
 	kl2 := prepSection()
+	_ = kl2.AddKey("nada", "nada")
+
 	kl3 := NewSection()
-	_ = kl3.AddKey("key0", "")
-	_ = kl3.AddKey("bool", "")
+	_ = kl3.AddKey("key0", "0")
+	_ = kl3.AddKey("bool", "nada")
+
 	kl4 := prepSection()
 	_ = kl4.AddKey("401", "")
 	_ = kl4.AddKey("402", "")
 
 	tests := []struct {
-		name string
-		// fields *TSection
-		args *TSection
-		want *TSection
+		name    string
+		section *TSection
+		want    *TSection
+		equal   bool
 	}{
-		{"0", kl, kl},
-		{"1", kl2, kl},
-		{"2", kl3, kl},
-		{"3", kl4, kl},
+		{"0", nil, kl, true},
+		{"1", kl1, kl, true},
+		{"2", kl2, kl1, false},
+		{"3", kl3, kl2, false},
+		{"4", kl4, kl3, false},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := kl.Merge(tt.args); !kl.CompareTo(got) {
-				t.Errorf("%q: TSection.Merge() = {\n%v},\nwant {\n%v}",
-					tt.name, got, tt.want)
+			if got := kl.Merge(tt.section); !got.CompareTo(tt.want) {
+				if tt.equal {
+					t.Errorf("%q: TSection.Merge() = {\n%v},\n>>>> want >>>> {\n%v}",
+						tt.name, got, tt.want)
+				}
 			}
 		})
 	}

@@ -53,6 +53,51 @@ type (
 
 // --------------------------------------------------------------------------
 
+// `compareTo()` returns whether the given list of key/value pairs is
+// equal to this instance.
+//
+// It takes another `tKeyValList` instance as a parameter and returns a
+// boolean value indicating whether the two sections are equal or not.
+//
+// If the method iterates over all key-value pairs without finding any
+// differences, it returns `true` indicating that the two sections are equal.
+// If either the respective section's lengths are different, or if at least
+// one of the keyValue pairs are different, the method's result is `false`.
+//
+// Parameters:
+// - `aList` The other `tKeyValList` instance to compare with.
+//
+// Returns:
+// - `bool`: `true` if `aList` is equal to this instance, or `false` otherwise.
+func (kvl tKeyValList) compareTo(aList *tKeyValList) bool {
+	if len(kvl) != len(*aList) {
+		return false
+	}
+
+	for _, kv := range kvl {
+		val, exists := aList.value(kv.Key)
+		if (!exists) || (val != kv.Value) {
+			return false
+		}
+	}
+
+	return true
+} // compareTo()
+
+// `copy()` returns a new `tKeyValList` that is a copy of the original list.
+//
+// This method creates a new slice and appends all elements from the original
+// list to the new slice. It returns the new slice.
+//
+// Returns:
+// - `tKeyValList`: A new slice that is a copy of the original list.
+func (kvl tKeyValList) copy() *tKeyValList {
+	twin := make(tKeyValList, 0, len(kvl))
+	twin = append(twin, kvl...)
+
+	return &twin
+} // copy()
+
 // `hasKey()` checks if a given key exists in the list.
 //
 // Parameters:
@@ -60,8 +105,8 @@ type (
 //
 // Returns:
 // - `bool`: `true` if the key is found in the list, or `false` otherwise.
-func (s tKeyValList) hasKey(aKey string) bool {
-	for _, entry := range s {
+func (kvl tKeyValList) hasKey(aKey string) bool {
+	for _, entry := range kvl {
 		if aKey == entry.Key {
 			return true
 		}
@@ -80,27 +125,35 @@ func (s tKeyValList) hasKey(aKey string) bool {
 //
 // Returns:
 // - `bool`: `true` if `aKeyVal` was added successfully, `false` otherwise.
-func (s *tKeyValList) insert(aKeyVal tKeyVal) bool {
+func (kvl *tKeyValList) insert(aKeyVal tKeyVal) bool {
 	if aKeyVal.Key = strings.TrimSpace(aKeyVal.Key); "" == aKeyVal.Key {
 		return false
 	}
 
-	sLen := len(*s)
+	sLen := len(*kvl)
 	idx := sort.Search(sLen, func(i int) bool {
-		return (*s)[i].Key >= aKeyVal.Key
+		return (*kvl)[i].Key >= aKeyVal.Key
 	})
 
 	if sLen == idx { // key not found
-		*s = append(*s, tKeyVal{})
-		copy((*s)[idx+1:], (*s)[idx:])
-	} else if (*s)[idx].Key != aKeyVal.Key { // it's a new key
-		*s = append(*s, tKeyVal{})
-		copy((*s)[idx+1:], (*s)[idx:])
+		*kvl = append(*kvl, tKeyVal{})
+		copy((*kvl)[idx+1:], (*kvl)[idx:])
+	} else if (*kvl)[idx].Key != aKeyVal.Key { // it's a new key
+		*kvl = append(*kvl, tKeyVal{})
+		copy((*kvl)[idx+1:], (*kvl)[idx:])
 	}
-	(*s)[idx] = aKeyVal // update the vale
+	(*kvl)[idx] = aKeyVal // update the vale
 
 	return true
 } // insert()
+
+func (kvl *tKeyValList) merge(aList *tKeyValList) *tKeyValList {
+	for _, kv := range *aList {
+		kvl.insert(tKeyVal{kv.Key, kv.Value})
+	}
+
+	return kvl
+} // merge()
 
 // `remove()` deletes `aKey` in the list of key/value pairs.
 //
@@ -109,16 +162,34 @@ func (s *tKeyValList) insert(aKeyVal tKeyVal) bool {
 //
 // Returns:
 // - `bool`: `true` if the `aKey` is found/removed, or `false` otherwise.
-func (s *tKeyValList) remove(aKey string) bool {
-	for idx, entry := range *s {
+func (kvl *tKeyValList) remove(aKey string) bool {
+	for idx, entry := range *kvl {
 		if aKey == entry.Key {
-			(*s) = append((*s)[:idx], (*s)[idx+1:]...)
+			(*kvl) = append((*kvl)[:idx], (*kvl)[idx+1:]...)
 			return true
 		}
 	}
 
 	return false
 } // remove()
+
+// `String()` returns a string representation of the whole INI section.
+//
+// The single key/value pairs are delimited by a linefeed ('\n).
+//
+// Returns:
+// - `string`: The string representation of the current section.
+func (kvl tKeyValList) String() (rString string) {
+	for _, kv := range kvl {
+		if "" == kv.Value {
+			rString += kv.Key + " =\n"
+		} else {
+			rString += kv.Key + " = " + kv.Value + "\n"
+		}
+	}
+
+	return
+} // String()
 
 // `value()` returns the value of `aKey` as a string.
 //
@@ -131,10 +202,10 @@ func (s *tKeyValList) remove(aKey string) bool {
 // Returns:
 // - `string, bool`: The value associated with `aKey`.
 // - `bool`: `true` if the aKey was found, `false` otherwise.
-func (s tKeyValList) value(aKey string) (string, bool) {
-	for _, entry := range s {
-		if aKey == entry.Key {
-			return entry.Value, true
+func (kvl tKeyValList) value(aKey string) (string, bool) {
+	for _, kv := range kvl {
+		if aKey == kv.Key {
+			return kv.Value, true
 		}
 	}
 
@@ -632,20 +703,26 @@ func (kl *TSection) CompareTo(aSection *TSection) bool {
 	kl.mtx.RLock()
 	defer kl.mtx.RUnlock()
 
-	if len(kl.data) != len(aSection.data) {
-		return false
-	}
-
-	for _, kv := range kl.data {
-		val, exists := aSection.data.value(kv.Key)
-		if (!exists) || (val != kv.Value) {
-			return false
-		}
-	}
-
-	return true
-
+	kvl := aSection.data
+	return kl.data.compareTo(&kvl)
 } // compareTo()
+
+// `Copy()` returns a copy of the current section.
+//
+// Returns:
+// - `*TSection`: A copy of the current section.
+func (kl *TSection) Copy() (rSection *TSection) {
+	rSection = &TSection{
+		data: make(tKeyValList, 0, kvDefCapacity),
+	}
+	kl.mtx.RLock()
+	defer kl.mtx.RUnlock()
+
+	kvl := kl.data.copy()
+	rSection.data = *kvl
+
+	return
+} // Copy()
 
 // `HasKey()` returns whether `aKey` exists in this INI section.
 //
@@ -683,12 +760,14 @@ func (kl *TSection) Len() int {
 // Returns:
 // - `TSection`: This section added/updated from `aSection`.
 func (kl *TSection) Merge(aSection *TSection) *TSection {
+	if nil == aSection {
+		return kl
+	}
 	kl.mtx.RLock()
 	defer kl.mtx.RUnlock()
 
-	for _, kv := range aSection.data {
-		kl.data.insert(tKeyVal{kv.Key, kv.Value})
-	}
+	merged := kl.data.merge(&aSection.data)
+	kl.data = *merged
 
 	return kl
 } // Merge()
@@ -747,15 +826,7 @@ func (kl *TSection) String() (rString string) {
 	kl.mtx.RLock()
 	defer kl.mtx.RUnlock()
 
-	for _, kv := range kl.data {
-		if "" == kv.Value {
-			rString += kv.Key + " =\n"
-		} else {
-			rString += kv.Key + " = " + kv.Value + "\n"
-		}
-	}
-
-	return
+	return kl.data.String()
 } // String()
 
 // `UpdateKey()` replaces the current value of `aKey` by the provided
